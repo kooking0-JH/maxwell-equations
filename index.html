@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>맥스웰 방정식, 네 줄로 읽는 전파</title>
+<style>
+:root{
+  --ink:#1d2330; --sub:#55606f; --line:#e3e7ee; --bg:#ffffff; --panel:#f6f8fb;
+  --E:#d48a00; --B:#1f6fd1; --cu:#b8733a; --pos:#d6453a; --neg:#2f6fd8;
+  --btn:#1f5fbf; --btnD:#143f80;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;word-break:keep-all;overflow-wrap:break-word;padding-bottom:96px}
+main{max-width:780px;margin:0 auto;padding:28px 18px 40px}
+h1{font-size:28px;line-height:1.35;margin:0 0 6px}
+.lead{color:var(--sub);margin:0 0 14px}
+h2{font-size:21px;line-height:1.4;margin:0 0 4px;padding-top:6px}
+h3{font-size:17px;margin:22px 0 6px}
+section{border-top:1px solid var(--line);padding:26px 0 8px;scroll-margin-top:12px;transition:background .4s}
+section.reading{background:linear-gradient(90deg,#fff8e6 0,#fff 60%);}
+.sec-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:8px}
+.sec-head h2{flex:1 1 auto}
+.era{display:inline-block;font-size:13px;color:var(--sub);margin-bottom:4px}
+p{margin:0 0 12px}
+b.E{color:var(--E)} b.B{color:var(--B)}
+.toc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:16px 0 6px}
+.toc ol{margin:4px 0 0;padding-left:22px}
+.toc a{color:var(--ink);text-decoration:none;border-bottom:1px solid #c9d2df}
+/* 수식 */
+.eq{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:21px;white-space:nowrap}
+.eqi{font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;font-size:1.06em;white-space:nowrap}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.86em;margin:0 3px;line-height:1.15}
+.fr>span:first-child{border-bottom:1.3px solid currentColor;padding:0 3px 1px}
+.fr>span:last-child{padding-top:1px}
+.sqrt{border-top:1.3px solid currentColor;padding:0 2px;margin-left:1px}
+.eqgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.eqcard{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px 12px;background:#fff;overflow-x:auto}
+.eqcard .no{display:inline-block;width:22px;height:22px;border-radius:5px;background:#eef1f6;text-align:center;font:600 13px/22px sans-serif;margin-right:6px}
+.eqcard .nm{font-size:13px;color:var(--sub);font-weight:600}
+.eqcard .eq{margin-top:6px;text-align:center}
+.eqcard.e{border-color:#f0d39a} .eqcard.b{border-color:#a9c6ee}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:14px 0}
+.box h4{margin:0 0 6px;font-size:15px}
+.radio{border-left:4px solid #2a9d6a;background:#f1faf5;border-radius:0 10px 10px 0;padding:12px 16px;margin:16px 0}
+.radio h4{margin:0 0 6px;font-size:15px;color:#1f7a52}
+.note{font-size:14px;color:var(--sub)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;margin:10px 0}
+th,td{border:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{background:#f1f4f8;font-weight:600}
+.tw{overflow-x:auto}
+/* 그림 */
+figure{margin:16px 0 18px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+figure svg,figure canvas{display:block;width:100%;height:auto;background:#fcfdff;border-radius:8px}
+figcaption{font-size:14px;color:var(--sub);margin-top:8px}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+/* 누를 수 있는 버튼: 채운 색 + 그림자 + 기호 */
+.btn{appearance:none;border:none;background:var(--btn);color:#fff;font:600 14.5px/1 inherit;font-family:inherit;padding:10px 14px;border-radius:9px;box-shadow:0 3px 0 var(--btnD);cursor:pointer;min-height:40px;touch-action:manipulation}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--btnD)}
+.btn:disabled{background:#9aa6b8;box-shadow:0 3px 0 #7b8698;cursor:default;transform:none}
+.btn.small{font-size:13px;padding:7px 11px;min-height:34px}
+.btn.alt{background:#fff;color:var(--btn);box-shadow:0 3px 0 var(--btnD);outline:2px solid var(--btn);outline-offset:-2px}
+.seg{display:inline-flex;border-radius:9px;box-shadow:0 3px 0 var(--btnD)}
+.seg button{appearance:none;border:2px solid var(--btn);background:#fff;color:var(--btn);font:600 14px/1 inherit;font-family:inherit;padding:9px 12px;min-height:40px;cursor:pointer;margin-left:-2px;touch-action:manipulation}
+.seg button:first-child{border-radius:9px 0 0 9px;margin-left:0}
+.seg button:last-child{border-radius:0 9px 9px 0}
+.seg button.on{background:var(--btn);color:#fff}
+/* 상태 표시: 버튼과 구분되는 점선 상자 */
+.tag{display:inline-block;border:1px dashed #a8b0bc;background:#f5f6f8;color:#4a5361;border-radius:4px;font-size:13px;padding:3px 8px;line-height:1.4}
+.tag::before{content:"상태 · ";color:#8b94a1}
+.slider{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--sub)}
+.slider input{width:140px}
+.steps{margin:10px 0 0;padding-left:22px}
+.steps li{margin:6px 0}
+.steps li.hide{display:none}
+.calc{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-size:15px}
+.calc input{width:120px;font-size:16px;padding:8px 10px;border:1.5px solid #b9c3d1;border-radius:8px}
+.ref{font-size:14px;color:var(--sub)}
+.ref a{color:var(--btn)}
+.ref ol{margin:6px 0 0;padding-left:20px}.ref li{margin:4px 0}.ref a{overflow-wrap:anywhere}
+/* 듣기 */
+.listen-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0 4px}
+body.emb #player{position:absolute;bottom:auto;top:0}
+#player{position:fixed;left:0;right:0;bottom:0;background:#1b2433;color:#fff;display:none;z-index:50;padding:8px 10px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -4px 14px rgba(0,0,0,.18)}
+#player.show{display:block}
+#player .in{max-width:780px;margin:0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#player button{appearance:none;border:none;background:#fff;color:#1b2433;font:700 14px/1 inherit;font-family:inherit;min-width:44px;min-height:38px;border-radius:8px;box-shadow:0 2px 0 #8090a8;cursor:pointer}
+#player button:active{transform:translateY(2px);box-shadow:none}
+#player .lbl{flex:1 1 160px;font-size:13.5px;line-height:1.35;min-width:0}
+#player .lbl b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#player .lbl span{color:#b8c3d6}
+#player select{font-size:14px;border-radius:6px;padding:5px}
+@media (max-width:560px){
+  body{font-size:15.5px}
+  h1{font-size:24px}
+  .eqgrid{grid-template-columns:1fr}
+  .eq{font-size:19px}
+  main{padding:20px 12px 30px}
+  figure{padding:8px}
+  #player .lbl{order:-1;flex-basis:100%}
+  #player button{min-width:52px}
+}
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>맥스웰 방정식, 네 줄로 읽는 전파</h1>
+  <p class="lead">전기와 자기가 하나의 현상이고, 그 결과로 전파가 생긴다는 사실이 네 개의 식에 담겨 있습니다. 안테나에서 나가는 모든 전파는 이 네 식을 따릅니다. 식이 만들어진 순서대로 한 줄씩 짚고, 각 식이 무선 장비의 어디에서 다시 나타나는지 함께 설명합니다.</p>
+  <div class="listen-top">
+    <button class="btn" id="listenAll">▶ 처음부터 듣기</button>
+    <span class="note" id="ttsNote">기기의 음성 읽기 기능으로 해설 대본을 읽어 줍니다.</span>
+  </div>
+  <nav class="toc">
+    <b>차례</b>
+    <ol>
+      <li><a href="#s1">네 줄의 모양과 기호 읽기</a></li>
+      <li><a href="#s2">1820년 외르스테드 — 전류가 자기를 만든다</a></li>
+      <li><a href="#s3">1831년 패러데이 — 변화가 전기를 만든다</a></li>
+      <li><a href="#s4">맥스웰의 번역 — 원천이 있는 장, 원천이 없는 장</a></li>
+      <li><a href="#s5">넷째 식의 구멍 — 축전기와 변위 전류</a></li>
+      <li><a href="#s6">서로를 낳는 두 장 — 전파의 탄생</a></li>
+      <li><a href="#s7">파동의 속도 — 광속이 나오다</a></li>
+      <li><a href="#s8">1887년 헤르츠 — 첫 번째 안테나</a></li>
+      <li><a href="#s9">같은 파동, 다른 크기 — 전자기 스펙트럼</a></li>
+      <li><a href="#s10">매질은 없다 — 에테르, 그리고 상대성으로</a></li>
+      <li><a href="#s11">네 줄 정리</a></li>
+    </ol>
+  </nav>
+</header>
+
+<!-- 0 -->
+<section id="s0" data-title="들어가며">
+  <p>물리학과 건물 벽이나 티셔츠에 장식처럼 적혀 있는 네 줄이 있습니다. 역삼각형, 점, 곱하기 기호, 그리고 E와 B. 이 네 줄이 맥스웰 방정식입니다. 리처드 파인만은 1만 년 뒤 이 시대를 돌아볼 때 가장 중요한 사건으로 남을 것이 맥스웰의 전자기 법칙 발견이라고 평가했습니다.</p>
+  <p>이 식들이 말하는 내용은 세 가지로 요약됩니다. 전기와 자기는 하나의 현상의 두 측면이다. 전하를 흔들면 전기장과 자기장이 하나로 묶인 파동이 되어 빈 공간으로 퍼진다. 그 파동이 빛이며, 전파도 같은 파동이다.</p>
+</section>
+
+<!-- 1 -->
+<section id="s1" data-title="네 줄의 모양과 기호 읽기">
+  <div class="sec-head"><h2>1. 네 줄의 모양과 기호 읽기</h2><button class="btn small alt" data-listen="s1">▶ 여기부터 듣기</button></div>
+
+  <div class="eqgrid">
+    <div class="eqcard e"><span class="no">1</span><span class="nm">가우스 법칙 (전기)</span>
+      <div class="eq">∇·<b class="E">E</b> = <span class="fr"><span>ρ</span><span>ε<sub>0</sub></span></span></div></div>
+    <div class="eqcard b"><span class="no">2</span><span class="nm">가우스 법칙 (자기)</span>
+      <div class="eq">∇·<b class="B">B</b> = 0</div></div>
+    <div class="eqcard e"><span class="no">3</span><span class="nm">패러데이 법칙</span>
+      <div class="eq">∇×<b class="E">E</b> = −<span class="fr"><span>∂<b class="B">B</b></span><span>∂t</span></span></div></div>
+    <div class="eqcard b"><span class="no">4</span><span class="nm">앙페르–맥스웰 법칙</span>
+      <div class="eq">∇×<b class="B">B</b> = μ<sub>0</sub><b>J</b> + μ<sub>0</sub>ε<sub>0</sub><span class="fr"><span>∂<b class="E">E</b></span><span>∂t</span></span></div></div>
+  </div>
+
+  <p>네 식은 모두 전기장 <b class="E">E</b>와 자기장 <b class="B">B</b>를 다룹니다. <b>장(field)</b>은 공간의 모든 점마다 크기와 방향을 가진 화살표가 하나씩 놓여 있다고 보는 개념입니다. 위의 두 식은 장이 <b>어디에서 시작되는가</b>를, 아래 두 식은 장이 <b>어떻게 감아 도는가</b>를 말합니다.</p>
+
+  <div class="tw"><table>
+    <tr><th>기호</th><th>원어</th><th>뜻</th><th>단위·값</th></tr>
+    <tr><td class="eqi"><b class="E">E</b></td><td>electric field</td><td>전기장. 단위 전하가 받는 힘</td><td>V/m</td></tr>
+    <tr><td class="eqi"><b class="B">B</b></td><td>magnetic flux density</td><td>자기장(자속 밀도)</td><td>T (테슬라)</td></tr>
+    <tr><td class="eqi">ρ <span class="note">(로)</span></td><td>charge density</td><td>전하 밀도. 단위 부피에 든 전하</td><td>C/m³</td></tr>
+    <tr><td class="eqi"><b>J</b></td><td>current density</td><td>전류 밀도. 단위 넓이를 지나는 전류</td><td>A/m²</td></tr>
+    <tr><td class="eqi">ε<sub>0</sub> <span class="note">(엡실론)</span></td><td>vacuum permittivity</td><td>진공 유전율. 진공이 전기장을 받아들이는 정도</td><td>8.854×10⁻¹² F/m</td></tr>
+    <tr><td class="eqi">μ<sub>0</sub> <span class="note">(뮤)</span></td><td>vacuum permeability</td><td>진공 투자율. 진공이 자기장을 받아들이는 정도</td><td>1.2566×10⁻⁶ H/m</td></tr>
+    <tr><td class="eqi">∇</td><td>nabla</td><td>x·y·z 방향의 변화율을 묶은 연산 기호</td><td>1/m</td></tr>
+    <tr><td class="eqi">∇·</td><td>divergence</td><td>발산. 한 점 둘레의 아주 작은 부피에서 빠져나가는 순유출량을 그 부피로 나눈 값</td><td>—</td></tr>
+    <tr><td class="eqi">∇×</td><td>curl</td><td>회전. 한 점에서 장이 감아 도는 세기와 그 회전축 방향을 함께 가진 벡터</td><td>—</td></tr>
+    <tr><td class="eqi">∂/∂t</td><td>partial derivative</td><td>시간에 대한 변화율. 다른 조건은 두고 시간만 바꿀 때의 변화</td><td>1/s</td></tr>
+    <tr><td class="eqi">Φ <span class="note">(파이)</span></td><td>flux</td><td>선속. 어떤 면을 뚫고 지나가는 장의 총량. Φ<sub>B</sub>는 자기 선속(자속), Φ<sub>E</sub>는 전기 선속</td><td>Φ<sub>B</sub>: Wb<br>Φ<sub>E</sub>: V·m</td></tr>
+  </table></div>
+
+  <h3>발산과 회전</h3>
+  <figure>
+    <svg viewBox="0 0 640 250" aria-label="발산과 회전 비교 그림">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d48a00"/></marker>
+        <marker id="ahb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f6fd1"/></marker>
+      </defs>
+      <text x="160" y="26" text-anchor="middle" font-size="16" font-weight="700" fill="#1d2330">발산 ∇·</text>
+      <rect x="125" y="95" width="70" height="70" fill="none" stroke="#7d8796" stroke-dasharray="5 4" stroke-width="1.5"/>
+      <g stroke="#d48a00" stroke-width="2.5" marker-end="url(#ah)">
+        <line x1="160" y1="130" x2="160" y2="58"/><line x1="160" y1="130" x2="160" y2="202"/>
+        <line x1="160" y1="130" x2="88" y2="130"/><line x1="160" y1="130" x2="232" y2="130"/>
+        <line x1="160" y1="130" x2="110" y2="80"/><line x1="160" y1="130" x2="210" y2="80"/>
+        <line x1="160" y1="130" x2="110" y2="180"/><line x1="160" y1="130" x2="210" y2="180"/>
+      </g>
+      <circle cx="160" cy="130" r="7" fill="#d6453a"/>
+      <text x="160" y="232" text-anchor="middle" font-size="13.5" fill="#55606f">작은 상자에서 나가는 양 − 들어오는 양</text>
+
+      <text x="480" y="26" text-anchor="middle" font-size="16" font-weight="700" fill="#1d2330">회전 ∇×</text>
+      <g fill="none" stroke="#1f6fd1" stroke-width="2.5">
+        <path d="M480,62 A68,68 0 0 1 548,130" marker-end="url(#ahb)"/>
+        <path d="M548,130 A68,68 0 0 1 480,198" marker-end="url(#ahb)"/>
+        <path d="M480,198 A68,68 0 0 1 412,130" marker-end="url(#ahb)"/>
+        <path d="M412,130 A68,68 0 0 1 480,62" marker-end="url(#ahb)"/>
+      </g>
+      <g id="pinwheel" transform="translate(480 130)">
+        <g stroke="#55606f" stroke-width="3" stroke-linecap="round">
+          <line x1="-26" y1="0" x2="26" y2="0"/><line x1="0" y1="-26" x2="0" y2="26"/>
+        </g>
+        <circle r="4" fill="#55606f"/>
+      </g>
+      <text x="480" y="232" text-anchor="middle" font-size="13.5" fill="#55606f">작은 바람개비가 도는 세기</text>
+    </svg>
+    <figcaption>왼쪽: 한 점에서 장이 뿜어져 나오면 발산이 양수입니다. 오른쪽: 장이 감아 돌면 그 자리에 놓은 바람개비가 돌고, 이 세기가 회전입니다.</figcaption>
+  </figure>
+
+  <p><b>발산</b>은 한 점 둘레에 아주 작은 상자를 씌웠을 때, 상자 밖으로 나가는 화살표가 들어오는 화살표보다 얼마나 많은지를 셉니다. 샘물처럼 장이 솟는 곳은 양수, 빨려 들어가는 곳은 음수, 들어온 만큼 나가면 0입니다. <b>회전</b>은 같은 점에 아주 작은 바람개비를 놓았을 때 그 바람개비가 도는 세기입니다. 화살표가 한 방향으로 나란히 흐르기만 하면 돌지 않고, 소용돌이처럼 감아 돌면 돕니다. 회전은 크기와 방향을 함께 가진 양으로, 바람개비가 가장 세게 도는 축의 방향(오른손 법칙)이 회전의 방향입니다.</p>
+
+  <div class="box">
+    <h4>미분형과 적분형</h4>
+    <p>위의 식은 한 점 주변을 다루는 <b>미분형</b>입니다. 같은 내용을 넓은 영역 단위로 쓴 것이 <b>적분형</b>입니다. ∯는 닫힌 면 전체에 걸쳐 더하는 면적분, ∮는 닫힌 고리 한 바퀴를 따라 더하는 선적분입니다.</p>
+    <div class="tw"><table>
+      <tr><th>#</th><th>적분형</th><th>말로 하면</th></tr>
+      <tr><td>1</td><td class="eqi">∯<b class="E">E</b>·d<b>A</b> = Q/ε<sub>0</sub></td><td>닫힌 면을 뚫고 나가는 전기력선의 총량은 안에 든 전하 Q로 정해진다</td></tr>
+      <tr><td>2</td><td class="eqi">∯<b class="B">B</b>·d<b>A</b> = 0</td><td>닫힌 면을 뚫고 나가는 자기력선의 총량은 언제나 0이다</td></tr>
+      <tr><td>3</td><td class="eqi">∮<b class="E">E</b>·d<b>l</b> = −dΦ<sub>B</sub>/dt</td><td>고리를 따라 한 바퀴 더한 전기장(고리에 생기는 전압)은 고리를 지나는 자속의 감소 빠르기와 같다</td></tr>
+      <tr><td>4</td><td class="eqi">∮<b class="B">B</b>·d<b>l</b> = μ<sub>0</sub>I + μ<sub>0</sub>ε<sub>0</sub>dΦ<sub>E</sub>/dt</td><td>고리를 따라 한 바퀴 더한 자기장은 고리를 지나는 전류와 전기 선속의 변화 빠르기로 정해진다</td></tr>
+    </table></div>
+    <p class="note">아래 그림들은 주로 적분형의 관점, 곧 "면을 뚫고 나가는 선의 개수"와 "고리를 감아 도는 양"으로 그렸습니다.</p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2" data-title="1820년 외르스테드 — 전류가 자기를 만든다">
+  <div class="sec-head"><h2>2. 1820년 외르스테드 — 전류가 자기를 만든다</h2><button class="btn small alt" data-listen="s2">▶ 여기부터 듣기</button></div>
+  <p>1800년대 초까지 전기와 자기는 서로 상관없는 두 학문이었습니다. 전기는 정전기 불꽃, 볼타 전지, 번개를 다뤘고, 자기는 자철석과 나침반을 다뤘습니다. 하나는 전하, 다른 하나는 쇳덩어리에 관한 현상이라 둘을 연결할 근거가 없었습니다.</p>
+  <p>1820년 덴마크의 한스 크리스티안 외르스테드는 강의 중 전선 가까이 나침반을 두고 전류를 흘렸습니다. 나침반 바늘이 옆으로 돌아갔습니다. 근처에 자석은 없었고, 전선을 따라 흐르는 전류만 있었습니다. <b>전류가 자기장을 만든다</b>는 첫 증거였습니다.</p>
+
+  <figure>
+    <svg id="figOe" viewBox="0 0 640 300" aria-label="외르스테드 실험"></svg>
+    <div class="ctrl">
+      <div class="seg" id="oeSeg">
+        <button data-c="0" class="on">전류 끄기</button>
+        <button data-c="1">▶ 북쪽으로 흘리기</button>
+        <button data-c="-1">▶ 남쪽으로 흘리기</button>
+      </div>
+      <span class="tag" id="oeTag">전류 없음 · 바늘은 지구 자기장을 따라 북쪽</span>
+    </div>
+    <figcaption>왼쪽은 위에서 내려다본 모습입니다. 남북으로 놓인 전선 바로 아래에 나침반이 있습니다. 오른쪽은 남쪽에서 북쪽을 바라본 전선 단면으로, 자기장이 전선을 중심으로 동심원을 그립니다. 전선 아래쪽에서 자기장은 서쪽을 향하므로 바늘의 N극이 서쪽으로 돕니다.</figcaption>
+  </figure>
+
+  <p>전류 방향을 바꾸면 바늘도 반대로 돕니다. 자기장의 방향은 <b>오른손 법칙</b>으로 정합니다. 오른손 엄지를 전류 방향으로 향하게 하고 전선을 감아쥐면, 네 손가락이 감기는 방향이 자기장의 방향입니다. 전선에서 거리가 r인 곳의 세기는 B = μ<sub>0</sub>I / (2πr)로, 멀어질수록 약해집니다.</p>
+  <p>전류가 흐르면 그 둘레에는 반드시 자기장이 생긴다는 이 사실이 넷째 식의 출발점입니다.</p>
+
+  <div class="radio">
+    <h4>무선과 연결</h4>
+    <p>인덕터(코일)는 도선을 여러 번 감아 각 바퀴의 자기장이 겹치도록 해서 인덕턴스를 키운 부품입니다. 페라이트나 철심 코어가 있으면 자속이 코어 안으로 집중됩니다. 안테나 도선에 고주파 전류가 흐를 때도 도선 둘레에는 같은 원리로 자기장이 생깁니다. 동축 케이블은 심선과 외부 도체에 크기가 같고 방향이 반대인 전류가 흘러, 케이블 바깥에서는 두 자기장이 서로 상쇄되도록 만든 구조입니다.</p>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="s3" data-title="1831년 패러데이 — 변화가 전기를 만든다">
+  <div class="sec-head"><h2>3. 1831년 패러데이 — 변화가 전기를 만든다</h2><button class="btn small alt" data-listen="s3">▶ 여기부터 듣기</button></div>
+  <p>외르스테드의 발견을 가장 집요하게 파고든 사람은 영국의 마이클 패러데이였습니다. 가난한 집안에서 태어나 정규 교육을 거의 받지 못했고, 십대에 제본소 견습공으로 일하며 제본하던 책으로 과학을 독학했습니다. 미적분 같은 수학은 거의 쓰지 못했지만 실험 솜씨와 물리적 직관은 당대 최고였습니다.</p>
+  <p>전기가 자기를 만든다면, 거꾸로 자기가 전기를 만들 수도 있을까. 1831년 패러데이는 코일과 자석으로 이 질문에 답했습니다.</p>
+
+  <figure>
+    <svg id="figFa" viewBox="0 0 640 280" aria-label="패러데이 전자기 유도 실험"></svg>
+    <div class="ctrl">
+      <button class="btn" id="faSlow">▶ 천천히 넣기</button>
+      <button class="btn" id="faFast">▶ 빠르게 넣기</button>
+      <button class="btn" id="faOut" disabled>▶ 빼기</button>
+      <span class="tag" id="faTag">자석 정지 · 전류 0</span>
+    </div>
+    <figcaption>자석이 멈춰 있으면 코일 안에 있든 밖에 있든 검류계 바늘은 0입니다. 움직이는 동안에만 바늘이 흔들리고, 빠를수록 크게 흔들리며, 빼면 반대로 흔들립니다.</figcaption>
+  </figure>
+
+  <p>자석을 코일 옆에 가만히 두면 아무 일도 일어나지 않습니다. 자석을 움직이는 순간 코일에 전류가 흐르고, 멈추면 전류도 멈춥니다. 전기를 만드는 것은 자석 자체가 아니라 <b>자기장의 변화</b>입니다.</p>
+  <div class="box">
+    <h4>패러데이 법칙</h4>
+    <p class="eq" style="text-align:center">V = −N <span class="fr"><span>dΦ<sub>B</sub></span><span>dt</span></span></p>
+    <p>코일에 생기는 전압 V는 코일을 지나는 자속 Φ<sub>B</sub>가 변하는 빠르기에 비례하고, 감은 횟수 N에 비례합니다. 자석을 두 배 빠르게 움직이면 전압도 두 배가 됩니다.</p>
+    <p>마이너스 부호는 <b>렌츠의 법칙</b>입니다. 유도된 전류는 자기를 만든 변화를 방해하는 방향으로 흐릅니다. N극을 코일에 넣으면 코일은 그쪽 끝에 N극을 만들어 자석을 밀어냅니다. 방향이 반대라면 자석을 조금만 밀어도 저절로 빨려 들어가며 에너지가 공짜로 생기게 되므로, 이 부호는 에너지 보존의 결과이기도 합니다.</p>
+  </div>
+  <p>미분형 셋째 식 ∇×<b class="E">E</b> = −∂<b class="B">B</b>/∂t는 같은 내용을 한 점에서 쓴 것입니다. 자기장이 시간에 따라 변하는 곳에는, 도선이 있든 없든 그 둘레를 감아 도는 전기장이 생깁니다. 도선은 그 전기장을 전류로 확인하는 도구일 뿐입니다.</p>
+
+  <h3>역선과 장</h3>
+  <p>패러데이는 자석이 닿지도 않은 쇠를 끌어당기는 이유를 설명하려고, 자석 주위 공간을 채운 보이지 않는 <b>역선(lines of force)</b>을 떠올렸습니다. 힘은 멀리서 곧바로 작용하는 것이 아니라 공간 자체가 어떤 상태가 되어 전달한다는 생각, 곧 <b>장(field)</b>의 시작입니다. 당시 수리물리학자들은 이 그림을 수학을 모르는 사람의 비유 정도로 여겼습니다.</p>
+
+  <div class="radio">
+    <h4>무선과 연결</h4>
+    <p>발전기는 코일 옆에서 자석을 돌리는 장치이고, 변압기는 1차 코일의 교류가 만든 변하는 자속으로 2차 코일에 전압을 만드는 장치입니다. 발룬, EFHW용 49:1 언언, 토로이드 코어 트랜스가 모두 셋째 식으로 동작합니다.</p>
+    <p>수신 쪽도 같습니다. 루프 안테나와 페라이트 막대 안테나는 전파 속 자기장의 변화가 코일에 만드는 전압을 받습니다. ARDF 80 m(3.5 MHz) 수신기의 페라이트 막대 안테나는 전파의 자기장이 막대 축과 나란할 때 코일 단면을 지나는 자속이 가장 크게 변해 신호가 최대가 됩니다. 막대 끝이 송신기를 향하면 자기장이 막대 축과 수직이 되어 코일을 지나는 자속이 변하지 않고, 신호가 사라지는 지점(null)이 생깁니다.</p>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="s4" data-title="맥스웰의 번역 — 원천이 있는 장, 원천이 없는 장">
+  <div class="sec-head"><h2>4. 맥스웰의 번역 — 원천이 있는 장, 원천이 없는 장</h2><button class="btn small alt" data-listen="s4">▶ 여기부터 듣기</button></div>
+  <p>패러데이의 역선을 진지하게 받아들인 사람이 스코틀랜드의 제임스 클러크 맥스웰입니다. 수학에 능했던 맥스웰은 패러데이가 그림으로 떠올린 장을 수학의 언어로 옮겼고, 그 결과를 1865년 논문 「전자기장의 동역학 이론(A Dynamical Theory of the Electromagnetic Field)」에 정리했습니다.</p>
+
+  <h3>첫째 식 — 전하가 전기장의 원천</h3>
+  <figure>
+    <svg id="figGe" viewBox="0 0 640 300" aria-label="전하와 전기력선"></svg>
+    <div class="ctrl">
+      <div class="seg" id="geSeg">
+        <button data-q="1" class="on">+Q</button>
+        <button data-q="2">+2Q</button>
+        <button data-q="-1">−Q</button>
+      </div>
+      <span class="tag" id="geTag">점선 면을 뚫고 나가는 선 +10개</span>
+    </div>
+    <figcaption>점선은 전하를 둘러싼 아무 모양의 닫힌 면입니다. 면의 모양을 어떻게 그려도 뚫고 나가는 전기력선의 개수는 안의 전하로만 정해집니다. 전하가 두 배면 선도 두 배입니다.</figcaption>
+  </figure>
+  <p>양전하에서는 전기력선이 바깥으로 나가고, 음전하에서는 안으로 들어옵니다. 전하는 전기력선이 태어나고 사라지는 곳, 곧 <b>원천</b>입니다.</p>
+  <p>전하 Q를 중심으로 반지름 r인 구면을 그리면, 같은 수의 전기력선이 넓이 4πr²의 구면 전체로 퍼집니다. 따라서</p>
+  <p class="eq" style="text-align:center">E · 4πr² = <span class="fr"><span>Q</span><span>ε<sub>0</sub></span></span> &nbsp;→&nbsp; E = <span class="fr"><span>Q</span><span>4πε<sub>0</sub>r²</span></span></p>
+  <p>전기장이 거리의 제곱에 반비례한다는 쿨롱의 법칙이 첫째 식에서 바로 나옵니다.</p>
+
+  <h3>둘째 식 — 자기장에는 원천이 없다</h3>
+  <figure>
+    <svg id="figMg" viewBox="0 0 640 280" aria-label="막대자석 자르기"></svg>
+    <div class="ctrl">
+      <button class="btn" id="mgCut">▶ 반으로 자르기</button>
+      <button class="btn alt" id="mgReset">처음 상태로</button>
+      <span class="tag" id="mgTag">자석 1개 · N–S 쌍 1개</span>
+    </div>
+    <figcaption>자석을 자르면 조각마다 새로운 N극과 S극이 생깁니다. 자기력선은 자석 밖에서는 N에서 S로, 자석 안에서는 S에서 N으로 이어져 언제나 닫힌 고리가 됩니다.</figcaption>
+  </figure>
+  <p>둘째 식의 오른쪽은 0입니다. 자기력선은 어디에서도 시작하거나 끝나지 않고 언제나 닫힌 고리를 이룹니다. 그래서 어떤 닫힌 면을 그려도 들어온 자기력선만큼 다시 나갑니다.</p>
+  <p>막대자석을 반으로 자르면 N극과 S극이 따로 떨어지지 않고, 잘린 조각마다 새 N극과 S극이 생깁니다. N극 또는 S극 하나만 따로 있는 <b>자기 홀극(monopole)</b>은 지금까지 한 번도 발견되지 않았습니다. 둘째 식은 이 관측 사실을 식으로 고정한 것입니다.</p>
+
+  <div class="radio">
+    <h4>무선과 연결</h4>
+    <p>다이폴 안테나 양 끝에는 고주파 전류를 따라 양전하와 음전하가 번갈아 쌓입니다. 첫째 식은 이 전하에서 전기력선이 나온다는 것을 말합니다. 양 끝에 전하가 가장 많이 모이므로 전위(전압)도 끝에서 가장 높습니다. 다만 안테나 주변 전기장 전체는 전하 분포만이 아니라 전류의 시간 변화(벡터 퍼텐셜의 변화)도 함께 만듭니다. 전파가 안테나를 떠난 먼 곳에서는 전기력선이 전하에서 시작하지 않고 자기력선처럼 스스로 닫힌 고리를 이루며 퍼져 나갑니다.</p>
+    <p>토로이드 코어가 자기장을 잘 가두는 것도 둘째 식과 관련이 있습니다. 자기력선은 고리를 이뤄야 하므로, 닫힌 고리 모양의 코어 안에 자기력선이 모여 바깥으로 거의 새지 않습니다.</p>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="s5" data-title="넷째 식의 구멍 — 축전기와 변위 전류">
+  <div class="sec-head"><h2>5. 넷째 식의 구멍 — 축전기와 변위 전류</h2><button class="btn small alt" data-listen="s5">▶ 여기부터 듣기</button></div>
+  <p>넷째 식은 외르스테드의 발견을 식으로 쓴 앙페르 법칙입니다. 맥스웰 이전의 식은 다음과 같았습니다.</p>
+  <p class="eq" style="text-align:center">∇×<b class="B">B</b> = μ<sub>0</sub><b>J</b> &nbsp;&nbsp;(원래 식)</p>
+  <p>이 식에는 구멍이 있습니다. 오늘날 교과서는 그 구멍을 <b>축전기</b> 하나로 보여 줍니다. 맥스웰이 실제로 이 사고실험에서 출발한 것은 아니지만(아래 「역사」 상자), 새 항이 왜 필요한지는 이 예에서 가장 분명하게 드러납니다.</p>
+
+  <figure>
+    <svg id="figCp" viewBox="0 0 640 300" aria-label="축전기 충전과 변위 전류"></svg>
+    <div class="ctrl">
+      <button class="btn" id="cpRun">▶ 충전하기</button>
+      <div class="seg" id="cpSeg">
+        <button data-m="0" class="on">원래 식 μ₀J</button>
+        <button data-m="1">수정 식 μ₀J + 변위 전류</button>
+      </div>
+    </div>
+    <div class="ctrl"><span class="tag" id="cpTag1">전선 전류 I = 0</span><span class="tag" id="cpTag2">틈의 ε₀A·dE/dt = 0</span></div>
+    <figcaption>충전하는 동안 전선에는 전류가 흐르고 둘레에 자기장(파란 고리)이 생깁니다. 두 판 사이 틈으로는 전하가 건너가지 않고 전기장(노란 화살표)만 커집니다. 원래 식으로는 틈의 자기장을 설명할 수 없고, 수정 식에서는 변하는 전기장이 전선의 전류와 같은 크기의 자기장을 만듭니다.</figcaption>
+  </figure>
+
+  <p>축전기는 두 금속판을 좁은 틈을 두고 마주 놓은 부품입니다. 전지에 연결하면 판에 전하가 쌓이는 동안 전선에 전류가 흐르고, 전선 둘레에는 자기장이 생깁니다. 그런데 두 판 사이 틈으로는 전하가 건너가지 않습니다. 틈에는 전류가 없고, 쌓이는 전하 때문에 커지는 전기장만 있습니다. 틈 둘레에도 자기장이 있어야 하는데, 원래 식으로는 그 값을 일관되게 계산할 수 없습니다. 무엇이 문제인지는 적분형으로 보면 분명해집니다.</p>
+
+  <h3>같은 고리, 두 개의 답</h3>
+  <figure>
+    <svg viewBox="0 0 640 270" aria-label="같은 고리에 걸친 두 면">
+      <line x1="20" y1="140" x2="300" y2="140" stroke="#b8733a" stroke-width="6"/>
+      <line x1="344" y1="140" x2="620" y2="140" stroke="#b8733a" stroke-width="6"/>
+      <rect x="300" y="62" width="9" height="156" fill="#8b6a4c"/>
+      <rect x="335" y="62" width="9" height="156" fill="#8b6a4c"/>
+      <path d="M180,82 C230,20 322,18 322,140 C322,262 230,260 180,198" fill="#f4c96a" fill-opacity=".35" stroke="#d48a00" stroke-width="2" stroke-dasharray="6 4"/>
+      <ellipse cx="180" cy="140" rx="14" ry="58" fill="#7fb0ec" fill-opacity=".35" stroke="none"/>
+      <ellipse cx="180" cy="140" rx="14" ry="58" fill="none" stroke="#1d2330" stroke-width="3"/>
+      <circle cx="180" cy="140" r="5" fill="#d6453a"/>
+      <text x="180" y="68" text-anchor="middle" font-size="14" font-weight="700" fill="#1d2330">고리 C</text>
+      <text x="40" y="226" font-size="13.5" fill="#1f6fd1" font-weight="700">평평한 면 S₁</text>
+      <text x="40" y="244" font-size="13" fill="#55606f">전선이 뚫고 지나감 → 전류 I</text>
+      <line x1="120" y1="222" x2="172" y2="172" stroke="#1f6fd1" stroke-width="1.2"/>
+      <text x="380" y="40" font-size="13.5" fill="#b06f00" font-weight="700">부풀린 면 S₂</text>
+      <text x="380" y="58" font-size="13" fill="#55606f">판 사이 틈을 지남 → 전류 0</text>
+      <line x1="378" y1="52" x2="324" y2="100" stroke="#b06f00" stroke-width="1.2"/>
+      <text x="80" y="128" font-size="13" fill="#55606f">I →</text>
+    </svg>
+    <figcaption>적분형 넷째 식은 고리 C를 감아 도는 자기장을, 그 고리를 가장자리로 하는 면을 뚫는 전류로 계산합니다. 같은 고리라도 면을 S₁으로 잡으면 I, S₂로 잡으면 0이 나옵니다.</figcaption>
+  </figure>
+  <p>문제를 더 분명히 하면 이렇습니다. 적분형 넷째 식은 고리를 감아 도는 자기장을, 그 고리를 가장자리로 삼는 면을 뚫고 지나가는 전류로 계산합니다. 고리의 가장자리만 같으면 면은 어떤 모양이어도 답이 같아야 합니다. 그런데 평평한 면 S₁은 전선을 만나 전류 I를 세고, 주머니처럼 부풀린 면 S₂는 판 사이를 지나 전류를 하나도 만나지 않습니다. 같은 고리에 두 개의 답이 나오므로 식이 스스로 모순입니다.</p>
+
+  <h3>변위 전류</h3>
+  <p>해결책은 <b>변하는 전기장도 전류처럼 자기장을 만든다</b>고 보고 식에 새 항을 더하는 것입니다.</p>
+  <p class="eq" style="text-align:center">∇×<b class="B">B</b> = μ<sub>0</sub><b>J</b> + μ<sub>0</sub>ε<sub>0</sub><span class="fr"><span>∂<b class="E">E</b></span><span>∂t</span></span></p>
+  <p>새 항 ε<sub>0</sub>∂<b class="E">E</b>/∂t를 <b>변위 전류</b> 밀도라고 부릅니다. 이 항이 정확히 맞아떨어지는지 확인해 봅니다.</p>
+  <div class="box">
+    <h4>변위 전류 = 전선 전류</h4>
+    <p>판의 넓이를 A, 판에 쌓인 전하를 Q라고 하면 틈의 전기장은 E = Q / (ε<sub>0</sub>A)입니다. 양변을 시간으로 미분하고 ε<sub>0</sub>A를 곱하면</p>
+    <p class="eq" style="text-align:center">ε<sub>0</sub>A <span class="fr"><span>dE</span><span>dt</span></span> = <span class="fr"><span>dQ</span><span>dt</span></span> = I</p>
+    <p>틈을 지나는 변위 전류는 전선을 흐르는 전류 I와 정확히 같습니다. 그래서 면 S₂로 계산해도 답이 I가 되고, 자기장은 틈에서도 끊기지 않습니다.</p>
+  </div>
+  <p class="note">한 걸음 더: 회전의 발산은 언제나 0이므로(∇·(∇×B) = 0) 원래 식대로라면 ∇·J = 0, 즉 어디에도 전하가 쌓일 수 없어야 합니다. 축전기 판에는 전하가 쌓이므로 원래 식은 전하 보존(∂ρ/∂t + ∇·J = 0)과 충돌합니다. 변위 전류 항을 더하면 첫째 식과 함께 이 충돌이 사라집니다.</p>
+  <div class="box">
+    <h4>역사: 맥스웰은 어떻게 이 항에 도달했나</h4>
+    <p>맥스웰은 1861–1862년 논문 「물리적 역선에 관하여(On Physical Lines of Force)」에서 변위 전류를 처음 도입했고, 1865년 논문에서 다시 정리했습니다. 출발점은 축전기 틈의 모순이 아니라 <b>유전체의 분극</b>이었습니다. 유리 같은 절연체에 기전력을 걸면 각 부분의 양쪽이 반대 부호로 대전하며 전기가 조금 밀려난(displacement) 상태가 되고, 이 변위가 늘거나 줄어드는 동안에는 전류와 같은 효과를 낸다고 보았습니다. 1865년 논문은 전체 전류를 '전도 전류 + 변위의 변화'로 쓰고, 같은 일이 진공을 채운 매질에서도 일어난다고 가정했습니다.</p>
+    <p>변위 전류가 만드는 자기장은 당시 기술로 직접 확인하기 어려웠습니다. 이 항을 포함한 이론이 예측한 전자기파를 1887년 헤르츠가 실험으로 확인하면서, 이론 전체가 강하게 뒷받침되었습니다. 헤르츠의 실험이 변위 전류 항 하나만을 따로 떼어 측정한 것은 아닙니다.</p>
+  </div>
+
+  <div class="radio">
+    <h4>무선과 연결</h4>
+    <p>커패시터가 직류는 막고 교류는 통과시키는 것처럼 보이는 이유가 변위 전류입니다. 주파수가 높을수록 전기장이 빨리 변하므로 변위 전류가 커지고, 리액턴스 X<sub>C</sub> = 1/(2πfC)는 작아집니다.</p>
+    <p>예: 100 pF 커패시터에 7 MHz, 진폭 1 V의 교류를 걸면 X<sub>C</sub> ≈ 227 Ω이고, 판 사이를 지나는 변위 전류의 진폭은 2πfCV ≈ 4.4 mA입니다. 같은 커패시터라도 3.5 MHz에서는 약 455 Ω, 144 MHz에서는 약 11 Ω입니다.</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="s6" data-title="서로를 낳는 두 장 — 전파의 탄생">
+  <div class="sec-head"><h2>6. 서로를 낳는 두 장 — 전파의 탄생</h2><button class="btn small alt" data-listen="s6">▶ 여기부터 듣기</button></div>
+  <p>전하도 전류도 없는 빈 공간(ρ = 0, <b>J</b> = 0)에서는 셋째 식과 넷째 식이 이렇게 남습니다.</p>
+  <div class="eqgrid">
+    <div class="eqcard e"><span class="nm">변하는 자기장 → 전기장</span><div class="eq">∇×<b class="E">E</b> = −<span class="fr"><span>∂<b class="B">B</b></span><span>∂t</span></span></div></div>
+    <div class="eqcard b"><span class="nm">변하는 전기장 → 자기장</span><div class="eq">∇×<b class="B">B</b> = μ<sub>0</sub>ε<sub>0</sub><span class="fr"><span>∂<b class="E">E</b></span><span>∂t</span></span></div></div>
+  </div>
+  <p>두 식은 서로를 가리킵니다. 한쪽이 변하면 다른 쪽이 생깁니다.</p>
+  <p>전하 하나를 잡고 한 번 흔든다고 생각해 봅니다. 전하가 움직이면 주위의 전기장이 변합니다. 변하는 전기장은 넷째 식에 따라 그 옆에 자기장을 만듭니다. 이 자기장은 0에서 생겨났으니 역시 변하고 있고, 셋째 식에 따라 조금 더 바깥에 전기장을 만듭니다. 그 전기장도 변하므로 또 그 바깥에 자기장을 만듭니다. 전기장과 자기장이 번갈아 서로를 만들며 처음 흔든 곳에서 멀어져 갑니다. 이것이 <b>전자기파</b>를 떠올리는 가장 쉬운 그림입니다. 이 그림은 비유이고, 그 한계는 아래 각주에 적었습니다.</p>
+
+  <figure>
+    <canvas id="cvWave" width="640" height="300" aria-label="전자기파 진행 그림"></canvas>
+    <div class="ctrl">
+      <button class="btn" id="wvPulse">▶ 한 번 흔들기</button>
+      <button class="btn" id="wvCont">▶ 계속 흔들기 (10초)</button>
+      <button class="btn alt" id="wvStop">■ 멈춤</button>
+    </div>
+    <div class="ctrl">
+      <label class="slider">흔드는 빠르기 <input type="range" id="wvK" min="1" max="5" step="1" value="2"> <span id="wvKv">2배</span></label>
+      <span class="tag" id="wvTag">파장 λ = 퍼지는 속도 × 주기</span>
+    </div>
+    <figcaption>왼쪽 끝 안테나에서 전하가 위아래로 흔들립니다. 노란 화살표는 전기장 E, 파란 화살표는 자기장 B입니다. 화살표는 제자리에서 커졌다 작아질 뿐이고, 앞으로 나아가는 것은 그 모양입니다. 빨리 흔들수록 파장이 짧아집니다.</figcaption>
+  </figure>
+
+  <p>이 과정에는 물이나 공기 같은 매질이 필요 없습니다. 두 장이 서로를 계속 다시 만들기 때문입니다. 멀리 퍼진 전파에는 다음 성질이 있습니다.</p>
+  <ul>
+    <li>전기장, 자기장, 진행 방향이 서로 수직입니다.</li>
+    <li>전기장과 자기장은 같은 순간에 함께 커지고 함께 작아집니다(같은 위상).</li>
+    <li>전기장이 진동하는 방향이 <b>편파</b>입니다. 이상적인 직선 안테나라면 수직으로 세우면 수직 편파, 눕히면 수평 편파입니다. 실제 편파는 안테나 구조·설치·급전 방식에 따라 달라집니다.</li>
+    <li>파동이 퍼지는 속도 c는 흔드는 빠르기와 상관없이 일정하므로, 파장은 λ = c / f입니다.</li>
+  </ul>
+  <p class="note">"두 장이 서로를 낳는다"는 이어달리기 그림은 이해를 돕는 비유입니다. 전기장이 먼저 생기고 자기장이 뒤따르는 시간 순서가 있는 것이 아니라, 진공에서 셋째·넷째 식을 함께 만족하는 전기장과 자기장의 해가 파동 꼴로 퍼지는 것이고, 둘의 근원은 안테나 속에서 가속하는 전하입니다.</p>
+
+  <div class="radio">
+    <h4>무선과 연결: 안테나가 하는 일</h4>
+    <p>송신 안테나가 하는 일이 정확히 이 그림입니다. 안테나 도선에 고주파 전류를 흘리면 도선 속 전자들이 1초에 수백만 번 앞뒤로 흔들리고, 그 흔들림이 전파가 되어 퍼집니다. 일정한 속도로 흐르는 직류는 변하지 않는 자기장만 만들 뿐 전파를 내지 않습니다. 전파를 내는 것은 속도가 바뀌는 전하, 곧 <b>가속하는 전하</b>입니다.</p>
+    <p>그림처럼 전기장과 자기장이 함께 오르내리는 모습은 안테나에서 충분히 먼 <b>원거리장</b>입니다. 파장에 비해 작은 안테나와 와이어 안테나에서는 대략 λ/2π를 경계로 봅니다. 그 안쪽 <b>반응성 근거리장</b>에서는 전기장과 자기장의 위상이 어긋나 에너지가 안테나와 주변 공간 사이를 오가며 대부분 되돌아오고, 바깥으로 갈수록 E/H 비가 377 Ω에 가까워지며 위상이 맞춰집니다. 7 MHz에서 λ/2π는 약 7 m입니다.</p>
+    <p>이 값은 대략적인 기준입니다. 접시 안테나처럼 파장에 비해 큰 안테나는 원거리장 경계를 2d²/λ(d: 안테나의 가장 긴 치수)로 잡는 등, 경계는 안테나 크기와 종류에 따라 달라집니다. 안테나 가까이 있는 물체나 사람이 SWR을 바꾸는 것도 많은 경우 이 영역의 장과 결합해 안테나의 임피던스를 바꾸기 때문입니다.</p>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="s7" data-title="파동의 속도 — 광속이 나오다">
+  <div class="sec-head"><h2>7. 파동의 속도 — 광속이 나오다</h2><button class="btn small alt" data-listen="s7">▶ 여기부터 듣기</button></div>
+  <p>맥스웰은 이 파동이 얼마나 빨리 퍼지는지 계산했습니다. 빈 공간의 두 식을 합치면 다음 꼴의 <b>파동 방정식</b>이 나옵니다.</p>
+  <p class="eq" style="text-align:center"><span class="fr"><span>∂²E</span><span>∂x²</span></span> = μ<sub>0</sub>ε<sub>0</sub> <span class="fr"><span>∂²E</span><span>∂t²</span></span></p>
+  <p>이 꼴의 식에서 파동의 속도는 v = 1/√(오른쪽 계수)로 정해집니다. 줄의 진동, 소리, 물결이 모두 같은 꼴의 식을 따르고, 계수만 다릅니다.</p>
+
+  <figure>
+    <div style="padding:6px 4px">
+      <p class="eq" style="text-align:center;margin:4px 0 10px">v = <span class="fr"><span>1</span><span>√<span class="sqrt">μ<sub>0</sub>ε<sub>0</sub></span></span></span></p>
+      <ol class="steps" id="spSteps">
+        <li>μ<sub>0</sub> ≈ 1.2566 × 10⁻⁶ H/m — 전류가 흐르는 두 전선 사이의 힘으로 측정</li>
+        <li class="hide">ε<sub>0</sub> ≈ 8.8542 × 10⁻¹² F/m — 두 전하 사이의 힘으로 측정</li>
+        <li class="hide">μ<sub>0</sub>ε<sub>0</sub> ≈ 1.1127 × 10⁻¹⁷ s²/m²</li>
+        <li class="hide">√(μ<sub>0</sub>ε<sub>0</sub>) ≈ 3.3356 × 10⁻⁹ s/m</li>
+        <li class="hide"><b>v ≈ 2.998 × 10⁸ m/s ≈ 300,000 km/s</b> — 빛의 속도 c</li>
+        <li class="hide">덤: √(μ<sub>0</sub>/ε<sub>0</sub>) ≈ <b>376.7 Ω</b> — 자유 공간 임피던스 Z<sub>0</sub></li>
+      </ol>
+    </div>
+    <div class="ctrl">
+      <button class="btn" id="spNext">▶ 다음 단계 보기</button>
+      <button class="btn alt" id="spReset">처음부터</button>
+      <span class="tag" id="spTag">1 / 6단계</span>
+    </div>
+    <figcaption>빛과 아무 관계 없이 실험대의 전지·전선·자석으로 측정한 두 상수에서 광속이 나옵니다.</figcaption>
+  </figure>
+
+  <p>두 상수는 빛이나 파동과 아무 관계 없이 측정된 값이었습니다. ε<sub>0</sub>은 전하 사이의 힘에서, μ<sub>0</sub>은 전류가 흐르는 두 전선 사이의 힘에서 얻습니다. 그런데 계산 결과는 사람들이 200년 가까이 측정해 온 빛의 속도와 같았습니다.</p>
+  <p>1865년 논문에서 맥스웰이 비교한 값은 다음과 같습니다. 베버와 콜라우시가 1856년에 얻은 v = 310,740 km/s는 파동의 속도를 잰 것이 아니라 <b>정전 단위와 전자기 단위의 비</b>입니다. 용량을 아는 축전기를 충전한 뒤 검류계로 방전시켜 얻은 값입니다. 광속 측정값은 피조 314,858 km/s, 푸코 298,000 km/s, 광행차에서 얻은 308,000 km/s였습니다.</p>
+  <p>맥스웰은 전기 측정에서 빛은 눈금을 읽는 데만 쓰였고, 광속 측정에는 전기도 자기도 쓰이지 않았다는 점을 짚었습니다. 그리고 두 값이 충분히 일치한다고 보고 <b>빛은 전자기 법칙에 따라 장을 통해 퍼지는 전자기적 교란</b>이라고 결론 내렸습니다. 전지와 축전기, 검류계로 잰 값에서 빛의 정체가 드러난 것입니다.</p>
+
+  <div class="radio">
+    <h4>무선과 연결: 377 Ω</h4>
+    <p>같은 두 상수로 <b>자유 공간 임피던스</b> Z<sub>0</sub> = √(μ<sub>0</sub>/ε<sub>0</sub>) ≈ 376.7 Ω(≈ 120π Ω)을 구할 수 있습니다. 원거리장에서 전기장 세기 E(V/m)를 자기장 세기 H(A/m)로 나누면 언제나 이 값입니다. 전계 강도계가 V/m만 재고도 전력 밀도를 계산할 수 있는 이유입니다. E가 실효값(RMS)이면 평균 전력 밀도는 S = E²/377 W/m², 진폭(피크값) E₀로 쓰면 S = E₀²/(2·377) W/m²입니다.</p>
+    <p>동축 케이블의 특성 임피던스 Z = (1/2π)·√(μ/ε)·ln(D/d) = (60/√ε<sub>r</sub>)·ln(D/d)에도 같은 √(μ/ε)가 들어 있습니다. 유전체는 비자성이므로 μ = μ<sub>0</sub>, ε = ε<sub>r</sub>ε<sub>0</sub>이고, (1/2π)·√(μ<sub>0</sub>/ε<sub>0</sub>) ≈ 59.96 Ω이 계수 60의 정체입니다. 50 Ω, 75 Ω이라는 값도 출발점은 이 두 상수입니다.</p>
+  </div>
+  <p class="note">지금의 국제단위계(2019년 개정)에서는 광속이 정확히 299,792,458 m/s로 정의되어 있고, μ<sub>0</sub>와 ε<sub>0</sub>는 측정으로 정하는 값입니다. CODATA 2022 권고값은 μ<sub>0</sub> = 1.256 637 061 27(20) × 10⁻⁶ H/m, ε<sub>0</sub> = 8.854 187 8188(14) × 10⁻¹² F/m, Z<sub>0</sub> = 376.730 313 412(59) Ω입니다. μ<sub>0</sub>는 예전의 정의값 4π×10⁻⁷ H/m와 10억분의 1 이내로 같습니다.</p>
+</section>
+
+<!-- 8 -->
+<section id="s8" data-title="1887년 헤르츠 — 첫 번째 안테나">
+  <div class="sec-head"><h2>8. 1887년 헤르츠 — 첫 번째 안테나</h2><button class="btn small alt" data-listen="s8">▶ 여기부터 듣기</button></div>
+  <p>맥스웰은 1879년 마흔여덟 살에 암으로 세상을 떠났습니다. 그의 식이 예언한 보이지 않는 전자기파는 그때까지 아무도 확인하지 못했고, 많은 학자가 이론을 받아들이지 않았습니다. 1886–1888년 독일 카를스루에의 하인리히 헤르츠가 그 파동을 직접 만들고 잡아냈습니다.</p>
+
+  <figure>
+    <svg id="figHz" viewBox="0 0 640 280" aria-label="헤르츠 송수신 실험"></svg>
+    <div class="ctrl">
+      <button class="btn" id="hzRun">▶ 불꽃 튀기기</button>
+      <div class="seg" id="hzSeg">
+        <button data-r="1" class="on">수신 고리: 크기 맞춤</button>
+        <button data-r="0">크기 어긋남</button>
+      </div>
+      <span class="tag" id="hzTag">대기 중</span>
+    </div>
+    <figcaption>왼쪽 송신기: 유도 코일의 높은 전압으로 두 막대 사이 틈에 불꽃을 튀깁니다. 오른쪽 수신기: 작은 틈이 있는 고리입니다. 고리 크기가 송신기와 공진하도록 맞으면 틈에 응답 불꽃이 튑니다.</figcaption>
+  </figure>
+
+  <p><b>송신기</b>는 유도 코일로 수만 볼트를 만들어, 끝에 금속 구를 단 두 막대 사이의 좁은 틈에 불꽃을 튀기는 장치였습니다. 불꽃이 튀어 틈이 도체가 되는 순간 막대 속 전류가 매우 빠르게 진동하고, 막대는 전파를 내보냅니다. 오늘날로 보면 <b>다이폴 안테나</b>이고, 주파수는 수십~수백 MHz 대역이었습니다.</p>
+  <p><b>수신기</b>는 작은 틈이 있는 철사 고리였습니다. 방 반대편에서 송신기에 불꽃이 튀면, 아무 전원도 연결되지 않은 고리의 틈에도 작은 불꽃이 튀었습니다. 고리를 지나는 자기장의 변화가 셋째 식에 따라 틈에 전압을 만든 것으로, <b>루프 안테나</b>의 원형입니다.</p>
+  <p>고리 크기가 송신기와 맞을 때 불꽃이 가장 잘 튀었습니다. 같은 주파수에서 <b>공진</b>하도록 맞춘 것입니다. 안테나 길이를 주파수에 맞춰 자르는 이유가 이것입니다.</p>
+  <p>헤르츠는 금속 벽에 파동을 반사시켜 정재파를 만들고, 마디 사이 거리로 파장을 쟀습니다. 회로 값에서 계산한 주파수와 파장을 곱하면 속도가 나오는데, 그 값이 광속과 같은 크기였습니다. 반사, 굴절, 그리고 고리를 돌리면 불꽃이 약해지는 <b>편파</b> 현상까지 확인해, 전파가 빛과 같은 성질의 파동이라는 것을 실험으로 보였습니다.</p>
+  <p>이 발견이 어디에 쓰이느냐는 질문에 헤르츠는 아무 쓸모가 없다고 답했다고 전해집니다. 그 파동이 오늘날의 모든 무선 통신, 방송, 그리고 아마추어 무선입니다. 주파수 단위 Hz는 그의 이름에서 왔습니다.</p>
+</section>
+
+<!-- 9 -->
+<section id="s9" data-title="같은 파동, 다른 크기 — 전자기 스펙트럼">
+  <div class="sec-head"><h2>9. 같은 파동, 다른 크기 — 전자기 스펙트럼</h2><button class="btn small alt" data-listen="s9">▶ 여기부터 듣기</button></div>
+  <p>빛이 전자기파라면 그 파동은 어떤 크기든 될 수 있습니다. 눈에 보이는 빛은 파장 약 380–780 nm의 아주 좁은 범위입니다. 파장을 늘이면 열로 느끼는 적외선, 마이크로파, 그리고 수 미터에서 수백 미터의 전파가 됩니다. 파장을 줄이면 자외선, X선, 감마선이 됩니다. 이름은 다르지만 모두 같은 전자기 현상이고, 진공에서는 같은 속도 c로 나아갑니다. 달라지는 것은 파장과 주파수, 그리고 그에 따른 광자 하나의 에너지(E = hf)와 물질과 상호작용하는 방식입니다. 전파는 안테나 도선의 전자를 흔들고, 적외선은 분자를 진동시켜 열을 내고, 자외선 이상은 원자에서 전자를 떼어 낼 만큼 에너지가 큽니다.</p>
+
+  <figure>
+    <svg id="figSp" viewBox="0 0 640 215" aria-label="전자기 스펙트럼"></svg>
+    <div class="calc">
+      <label for="fIn">주파수</label>
+      <input id="fIn" type="number" inputmode="decimal" value="7.0" min="0.000001" step="any">
+      <span>MHz</span>
+      <button class="btn" id="fGo">▶ 계산</button>
+    </div>
+    <div class="tw"><table id="fOut"></table></div>
+    <figcaption>가로축은 파장의 로그 눈금입니다. 한 칸이 10배씩 차이 납니다. 가시광선은 전체 중 아주 좁은 띠이고, 아마추어 무선의 HF 대역은 왼쪽 전파 영역에 있습니다. 계산한 주파수는 막대 아래 빨간 표시로 나타납니다.</figcaption>
+  </figure>
+
+  <p>주파수를 알면 파장은 λ = c / f로 구합니다. MHz 단위로는 <b>λ(m) ≈ 300 / f(MHz)</b>입니다. 7 MHz는 약 43 m, 144 MHz는 약 2 m입니다. 40 m 밴드, 2 m 밴드라는 이름이 여기서 나왔습니다.</p>
+  <div class="tw"><table>
+    <tr><th>밴드</th><th>주파수</th><th>파장(자유 공간)</th><th>반파장</th></tr>
+    <tr><td>80 m</td><td>3.5 MHz</td><td>85.7 m</td><td>42.8 m</td></tr>
+    <tr><td>40 m</td><td>7.0 MHz</td><td>42.8 m</td><td>21.4 m</td></tr>
+    <tr><td>20 m</td><td>14.0 MHz</td><td>21.4 m</td><td>10.7 m</td></tr>
+    <tr><td>10 m</td><td>28.0 MHz</td><td>10.7 m</td><td>5.35 m</td></tr>
+    <tr><td>2 m</td><td>144 MHz</td><td>2.08 m</td><td>1.04 m</td></tr>
+    <tr><td>70 cm</td><td>430 MHz</td><td>0.70 m</td><td>0.35 m</td></tr>
+  </table></div>
+  <p class="note">실제 반파장 다이폴은 도선 굵기와 끝단 효과 때문에 계산값보다 몇 % 짧게 만들고, 동축 케이블 안에서는 파장이 단축률(속도 계수)만큼 짧아집니다.</p>
+</section>
+
+<!-- 10 -->
+<section id="s10" data-title="매질은 없다 — 에테르, 그리고 상대성으로">
+  <div class="sec-head"><h2>10. 매질은 없다 — 에테르, 그리고 상대성으로</h2><button class="btn small alt" data-listen="s10">▶ 여기부터 듣기</button></div>
+  <p>맥스웰의 파동에는 당시 사람들이 받아들이기 어려운 점이 있었습니다. <b>무엇이 진동하는가</b>입니다. 소리는 공기를, 물결은 물을 매질로 퍼집니다. 그래서 빛도 우주 공간을 가득 채운 보이지 않는 매질을 통해 퍼진다고 여겼고, 그 매질을 <b>빛을 나르는 에테르(luminiferous aether)</b>라고 불렀습니다.</p>
+  <p>맥스웰 자신도 에테르를 믿었고, 1865년 논문은 장을 매질의 운동으로 설명합니다. 그러나 완성된 식에는 매질의 성질이 들어갈 자리가 없습니다. 진공에서 진동하는 것은 전기장과 자기장 자신입니다.</p>
+
+  <figure>
+    <svg viewBox="0 0 640 300" aria-label="마이컬슨-몰리 간섭계">
+      <defs><marker id="ahy" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#d48a00"/></marker>
+      <marker id="ahg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8b94a1"/></marker></defs>
+      <rect x="30" y="138" width="56" height="26" rx="4" fill="#ffe7a8" stroke="#b06f00"/>
+      <text x="58" y="186" text-anchor="middle" font-size="13" fill="#55606f">광원</text>
+      <g stroke="#d48a00" stroke-width="3" fill="none">
+        <line x1="86" y1="151" x2="258" y2="151" marker-end="url(#ahy)"/>
+        <line x1="268" y1="151" x2="516" y2="151"/>
+        <line x1="263" y1="146" x2="263" y2="52"/>
+        <line x1="263" y1="160" x2="263" y2="246" marker-end="url(#ahy)"/>
+      </g>
+      <line x1="244" y1="132" x2="282" y2="170" stroke="#5d8fd6" stroke-width="5" opacity=".8"/>
+      <text x="300" y="186" font-size="13" fill="#55606f">반투명 거울</text>
+      <rect x="518" y="112" width="8" height="78" fill="#8b94a1"/>
+      <text x="532" y="110" font-size="13" fill="#55606f">거울</text>
+      <rect x="224" y="40" width="78" height="8" fill="#8b94a1"/>
+      <text x="310" y="40" font-size="13" fill="#55606f">거울</text>
+      <rect x="240" y="252" width="46" height="26" rx="4" fill="#e9eef6" stroke="#55606f"/>
+      <text x="300" y="270" font-size="13" fill="#55606f">검출기(간섭무늬)</text>
+      <text x="390" y="140" font-size="13" fill="#b06f00">팔 1 왕복</text>
+      <text x="272" y="100" font-size="13" fill="#b06f00">팔 2 왕복</text>
+      <line x1="380" y1="62" x2="560" y2="62" stroke="#8b94a1" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#ahg)"/>
+      <text x="380" y="52" font-size="13" fill="#8b94a1">예상했던 에테르 바람 (지구 공전 약 30 km/s)</text>
+    </svg>
+    <figcaption>빛을 둘로 나눠 서로 수직인 두 팔을 왕복시킨 뒤 다시 합칩니다. 지구가 에테르 속을 움직인다면 두 팔의 왕복 시간이 달라 장치를 돌릴 때 간섭무늬가 움직여야 했습니다. 1887년에는 예상한 크기의 이동이 나타나지 않았습니다(영 결과).</figcaption>
+  </figure>
+
+  <p>1887년 마이컬슨과 몰리는 지구가 에테르 속을 움직이는 효과를 검출하려고 위의 간섭계를 만들었습니다. 거울로 빛의 경로를 약 11 m까지 늘리고 장치 전체를 수은 위에 띄워, 지구의 공전 속도를 v(약 30 km/s)라 할 때 (v/c)² ≈ 10⁻⁸ 수준의 차이를 볼 수 있게 했습니다. 측정된 무늬 이동은 예상값의 20분의 1보다 확실히 작았고, 아마 40분의 1보다도 작았습니다. 이른바 <b>영(零) 결과</b>입니다.</p>
+  <p>이 결과가 곧바로 에테르를 부정한 것은 아닙니다. 마이컬슨은 에테르 바람을 검출하려던 이 실험을 목적을 이루지 못한 실험으로 여겼지만, 에테르에 대한 믿음 자체는 버리지 않았습니다. 로런츠와 피츠제럴드는 에테르 속을 움직이는 물체가 운동 방향으로 줄어든다는 가설로 결과를 설명하며 에테르를 유지했습니다.</p>
+  <p>1905년의 상대성 이론은 에테르 없이도 이 결과를 설명할 수 있었고, 이후 에테르는 물리학에서 쓰이지 않게 되었습니다. 다만 이 실험 결과 하나가 에테르를 폐기시켰다거나, 아인슈타인이 이 실험에서 곧바로 출발했다고 보기는 어렵습니다. 아인슈타인에게 이 실험이 얼마나 영향을 주었는지는 과학사에서 지금도 논의가 이어지는 주제입니다.</p>
+  <p>맥스웰의 식에서 광속은 μ<sub>0</sub>와 ε<sub>0</sub>, 곧 빈 공간의 성질로만 정해집니다. 1905년 스물여섯 살의 알베르트 아인슈타인은 <b>광속은 관찰자의 운동과 상관없이 누구에게나 같다</b>는 것을 기본 원리(공준)로 받아들였습니다. 이것은 맥스웰 식에서 곧바로 증명되는 사실이 아니라, 맥스웰 식이 어느 관찰자에게나 같은 모양으로 성립하도록 아인슈타인이 세운 출발점입니다. 보통의 물체라면 마주 달려오는 사람에게 속도가 더해져 보여야 하지만 빛은 그렇지 않으므로, 그 대가로 시간과 길이가 관찰자에 따라 달라져야 했습니다. 여기서 특수 상대성 이론, 시간 지연, E = mc²가 나왔습니다.</p>
+  <div class="box">
+    <h4>네 줄은 누가 썼나</h4>
+    <p>맥스웰이 1865년에 쓴 원래 형태는 20개의 변수와 20개의 식이었습니다. 지금의 네 줄 벡터 형태는 1880년대 올리버 헤비사이드(그리고 독립적으로 하인리히 헤르츠)가 정리한 것입니다. 헤비사이드는 전신선 이론과 '임피던스'라는 용어로도 무선 분야에 이름을 남겼습니다.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="s11" data-title="네 줄 정리">
+  <div class="sec-head"><h2>11. 네 줄 정리</h2><button class="btn small alt" data-listen="s11">▶ 여기부터 듣기</button></div>
+  <div class="tw"><table>
+    <tr><th>식</th><th>말로 하면</th><th>무선에서 만나는 곳</th></tr>
+    <tr><td class="eqi">∇·<b class="E">E</b> = ρ/ε<sub>0</sub></td><td>전하에서 전기력선이 나온다</td><td>안테나 끝의 고전압, 정전 용량</td></tr>
+    <tr><td class="eqi">∇·<b class="B">B</b> = 0</td><td>자기력선은 시작도 끝도 없는 고리다</td><td>토로이드 코어, 자기 회로</td></tr>
+    <tr><td class="eqi">∇×<b class="E">E</b> = −∂<b class="B">B</b>/∂t</td><td>변하는 자기장은 전기장을 감아 만든다</td><td>변압기, 발룬·언언, 루프·페라이트 안테나</td></tr>
+    <tr><td class="eqi">∇×<b class="B">B</b> = μ<sub>0</sub><b>J</b> + μ<sub>0</sub>ε<sub>0</sub>∂<b class="E">E</b>/∂t</td><td>전류와 변하는 전기장은 자기장을 감아 만든다</td><td>인덕터, 커패시터의 교류 통과</td></tr>
+    <tr><td>3 + 4</td><td>결합된 두 장이 파동으로 빈 공간을 c로 퍼진다</td><td>모든 전파, λ = c/f, 377 Ω</td></tr>
+  </table></div>
+  <p>수학을 쓰지 못한 제본공 출신 패러데이가 장을 떠올렸고, 맥스웰이 그것을 식으로 옮기며 변위 전류라는 새 항으로 체계를 완성했고, 헤르츠가 그 파동을 처음 송신하고 수신했습니다. 안테나를 세우고 전파를 내보낼 때마다 이 네 줄이 동작합니다.</p>
+  <div class="ref">
+    <b>참고 자료</b>
+    <ol>
+      <li>참고 영상: <a href="https://youtu.be/yGWEuxaaMNw" target="_blank" rel="noopener">https://youtu.be/yGWEuxaaMNw</a></li>
+      <li>J. C. Maxwell, A Dynamical Theory of the Electromagnetic Field, Phil. Trans. R. Soc. Lond. 155, 459–512 (1865) — 20개 식, 변위, 광속 비교(§96–97): <a href="https://www.thphys.uni-heidelberg.de/~ewerz/ps/Maxwell1865.pdf" target="_blank" rel="noopener">PDF</a></li>
+      <li>P. J. Mohr, D. B. Newell, B. N. Taylor, E. Tiesinga, CODATA recommended values of the fundamental physical constants: 2022, Rev. Mod. Phys. 97, 025002 (2025) — μ₀, ε₀, Z₀: <a href="https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=958143" target="_blank" rel="noopener">PDF</a></li>
+      <li>NASA GSFC-STD-8715.1A, 부록 A.2 Near- and Far-Field Regions — 근거리장·원거리장 경계: <a href="https://standards.nasa.gov/sites/default/files/standards/GSFC/A/0/GSFC-STD-87151A_Adm-Ext.pdf" target="_blank" rel="noopener">PDF</a></li>
+      <li>APS News, November 1887: Michelson and Morley report their failure to detect the luminiferous ether (2007) — 마이컬슨–몰리 실험사: <a href="https://www.aps.org/apsnews/2007/11/november-1887-michelson-uminiferous-ether" target="_blank" rel="noopener">웹 페이지</a></li>
+      <li>MIT OCW STS.042J, Lecture 4: Waves in the Ether — 마이컬슨–몰리 실험과 로런츠 수축: <a href="https://ocw.mit.edu/courses/sts-042-einstein-oppenheimer-feynman-physics-in-the-20th-century-fall-2020/mitsts_042j_f20_lec04.pdf" target="_blank" rel="noopener">PDF</a></li>
+      <li>H. C. Ørsted, Experimenta circa effectum conflictus electrici in acum magneticam (1820) — 전류가 나침반을 움직인 실험</li>
+      <li>M. Faraday, Experimental Researches in Electricity, First Series, Phil. Trans. R. Soc. Lond. 122 (1832) — 전자기 유도</li>
+      <li>H. Hertz, Electric Waves (D. E. Jones 영역, 1893) — 불꽃 간극 송신기와 고리 수신기, 반사·굴절·편파 실험</li>
+      <li>O. Heaviside, Electromagnetic Theory, Vol. 1 (1893) — 네 줄 벡터 형태</li>
+      <li>N. Forbes, B. Mahon, Faraday, Maxwell, and the Electromagnetic Field (2014) — 패러데이·맥스웰 전기와 과학사 개관</li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<div id="player" role="region" aria-label="듣기 재생 막대">
+  <div class="in">
+    <button id="pPrev" aria-label="이전 부분">⏮</button>
+    <button id="pPlay" aria-label="일시정지">⏸</button>
+    <button id="pNext" aria-label="다음 부분">⏭</button>
+    <div class="lbl"><b id="pTitle">—</b><span id="pProg"></span></div>
+    <select id="pRate" aria-label="읽기 속도">
+      <option value="0.9">0.9×</option><option value="1" selected>1.0×</option><option value="1.1">1.1×</option><option value="1.25">1.25×</option>
+    </select>
+    <button id="pStop" aria-label="듣기 끝내기">✕</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var NS="http://www.w3.org/2000/svg";
+function el(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function txt(parent,x,y,s,attrs){var a={x:x,y:y};for(var k in attrs)a[k]=attrs[k];var t=el("text",a,parent);t.textContent=s;return t;}
+function $(id){return document.getElementById(id);}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function anim(dur,fn,done){var t0=null;function f(ts){if(t0===null)t0=ts;var p=clamp((ts-t0)/dur,0,1);fn(p,ts-t0);if(p<1)requestAnimationFrame(f);else if(done)done();}requestAnimationFrame(f);}
+function segInit(id,cb){var seg=$(id);var bs=seg.querySelectorAll("button");bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.classList.remove("on");});b.classList.add("on");cb(b);});});}
+function arrowTri(parent,x,y,ang,size,color){var a=ang,s=size;var p=[[x+Math.cos(a)*s,y+Math.sin(a)*s],[x+Math.cos(a+2.5)*s*0.8,y+Math.sin(a+2.5)*s*0.8],[x+Math.cos(a-2.5)*s*0.8,y+Math.sin(a-2.5)*s*0.8]];return el("polygon",{points:p.map(function(q){return q[0].toFixed(1)+","+q[1].toFixed(1);}).join(" "),fill:color},parent);}
+
+/* ---------- 외르스테드 ---------- */
+(function(){
+  var s=$("figOe");
+  txt(s,180,22,"위에서 본 모습",{"text-anchor":"middle","font-size":14,"font-weight":700,fill:"#1d2330"});
+  el("circle",{cx:180,cy:155,r:96,fill:"#f7f8fa",stroke:"#7d8796","stroke-width":2},s);
+  [["N",180,73],["S",180,246],["E",266,160],["W",94,160]].forEach(function(d){txt(s,d[1],d[2],d[0],{"text-anchor":"middle","font-size":13,fill:"#8b94a1","font-weight":700});});
+  for(var i=0;i<36;i++){var a=i*Math.PI/18;el("line",{x1:180+Math.cos(a)*88,y1:155+Math.sin(a)*88,x2:180+Math.cos(a)*(i%9===0?78:83),y2:155+Math.sin(a)*(i%9===0?78:83),stroke:"#b4bcc8","stroke-width":1.5},s);}
+  var needle=el("g",{transform:"rotate(0 180 155)"},s);
+  el("polygon",{points:"180,77 189,155 171,155",fill:"#d6453a"},needle);
+  el("polygon",{points:"180,233 189,155 171,155",fill:"#8b94a1"},needle);
+  el("circle",{cx:180,cy:155,r:5,fill:"#1d2330"},needle);
+  el("line",{x1:180,y1:34,x2:180,y2:285,stroke:"#b8733a","stroke-width":9,"stroke-opacity":0.55,"stroke-linecap":"round"},s);
+  var flow=el("line",{x1:180,y1:34,x2:180,y2:285,stroke:"#ffd36b","stroke-width":4,"stroke-dasharray":"5 13",opacity:0},s);
+  var arr=el("g",{opacity:0},s);
+  arrowTri(arr,180,48,-Math.PI/2,12,"#b06f00");
+  var curT=txt(s,196,52,"",{"font-size":13,fill:"#b06f00","font-weight":700});
+  /* 단면 */
+  var cx=500,cy=150;
+  txt(s,cx,22,"단면 (남쪽에서 북쪽을 봄)",{"text-anchor":"middle","font-size":14,"font-weight":700,fill:"#1d2330"});
+  var rings=el("g",{opacity:0.15},s);
+  var heads=el("g",{},rings);
+  [36,64,92].forEach(function(r){el("circle",{cx:cx,cy:cy,r:r,fill:"none",stroke:"#1f6fd1","stroke-width":2,"stroke-dasharray":"6 5"},rings);});
+  el("circle",{cx:cx,cy:cy,r:14,fill:"#e8c19c",stroke:"#b8733a","stroke-width":3},s);
+  var sym=el("g",{},s);
+  var cmpLbl=txt(s,cx,cy+122,"",{"text-anchor":"middle","font-size":12.5,fill:"#55606f"});
+  function drawSym(c){
+    while(sym.firstChild)sym.removeChild(sym.firstChild);
+    while(heads.firstChild)heads.removeChild(heads.firstChild);
+    if(c===1){el("line",{x1:cx-8,y1:cy-8,x2:cx+8,y2:cy+8,stroke:"#7a4a20","stroke-width":2.5},sym);el("line",{x1:cx-8,y1:cy+8,x2:cx+8,y2:cy-8,stroke:"#7a4a20","stroke-width":2.5},sym);}
+    if(c===-1){el("circle",{cx:cx,cy:cy,r:3.5,fill:"#7a4a20"},sym);}
+    if(c!==0){[36,64,92].forEach(function(r){
+      /* 위쪽 꼭대기: 시계방향이면 오른쪽, 반시계면 왼쪽 */
+      arrowTri(heads,cx,cy-r,c===1?0:Math.PI,9,"#1f6fd1");
+      arrowTri(heads,cx,cy+r,c===1?Math.PI:0,9,"#1f6fd1");
+    });}
+    cmpLbl.textContent=c===0?"":(c===1?"전선 아래(나침반 위치)에서 자기장은 서쪽(←)":"전선 아래(나침반 위치)에서 자기장은 동쪽(→)");
+  }
+  drawSym(0);
+  var ang=0;
+  function setCur(c){
+    var target=c===1?-62:(c===-1?62:0);var a0=ang;
+    anim(900,function(p){var e=1-Math.pow(1-p,3);ang=a0+(target-a0)*e;needle.setAttribute("transform","rotate("+ang.toFixed(1)+" 180 155)");});
+    flow.setAttribute("opacity",c===0?0:1);
+    flow.style.animation=c===0?"none":("oeflow .6s linear infinite"+(c===-1?" reverse":""));
+    arr.setAttribute("opacity",c===0?0:1);
+    arr.setAttribute("transform",c===-1?"rotate(180 180 160)":"");
+    curT.textContent=c===0?"":"전류 I";
+    curT.setAttribute("y",c===-1?276:52);
+    rings.setAttribute("opacity",c===0?0.15:1);
+    drawSym(c);
+    $("oeTag").textContent=c===0?"전류 없음 · 바늘은 지구 자기장을 따라 북쪽":(c===1?"전류 북쪽 · 바늘 N극이 서쪽으로 돎":"전류 남쪽 · 바늘 N극이 동쪽으로 돎");
+  }
+  var st=document.createElement("style");st.textContent="@keyframes oeflow{from{stroke-dashoffset:18}to{stroke-dashoffset:0}}";document.head.appendChild(st);
+  segInit("oeSeg",function(b){setCur(parseInt(b.dataset.c,10));});
+})();
+
+/* ---------- 패러데이 ---------- */
+(function(){
+  var s=$("figFa");
+  var cy=118, X_OUT=30, X_IN=330, magX=X_OUT, busy=false;
+  /* 뒤쪽 코일 반쪽 */
+  var back=el("g",{},s);
+  for(var i=0;i<15;i++){var x=330+i*10;el("path",{d:"M"+x+","+(cy-46)+" A9,46 0 0 0 "+x+","+(cy+46),fill:"none",stroke:"#8a5a30","stroke-width":2.5,opacity:0.55},back);}
+  var mag=el("g",{transform:"translate("+X_OUT+" 0)"},s);
+  el("rect",{x:0,y:cy-18,width:70,height:36,fill:"#3a7bd5",rx:3},mag);
+  el("rect",{x:70,y:cy-18,width:70,height:36,fill:"#d84a3a",rx:3},mag);
+  txt(mag,35,cy+6,"S",{"text-anchor":"middle","font-size":18,"font-weight":700,fill:"#fff"});
+  txt(mag,105,cy+6,"N",{"text-anchor":"middle","font-size":18,"font-weight":700,fill:"#fff"});
+  var glow=el("g",{opacity:0},s);
+  var front=el("g",{},s);
+  for(var j=0;j<15;j++){var x2=330+j*10;
+    el("path",{d:"M"+x2+","+(cy-46)+" A9,46 0 0 1 "+x2+","+(cy+46),fill:"none",stroke:"#ffcf4a","stroke-width":7,"stroke-linecap":"round"},glow);
+    el("path",{d:"M"+x2+","+(cy-46)+" A9,46 0 0 1 "+x2+","+(cy+46),fill:"none",stroke:"#b8733a","stroke-width":3},front);}
+  txt(s,400,cy-58,"코일",{"text-anchor":"middle","font-size":13,fill:"#55606f"});
+  /* 도선과 검류계 */
+  el("polyline",{points:"330,"+(cy+46)+" 330,236 520,236",fill:"none",stroke:"#b8733a","stroke-width":2.5},s);
+  el("polyline",{points:"470,"+(cy+46)+" 470,212 520,212",fill:"none",stroke:"#b8733a","stroke-width":2.5},s);
+  var gx=575,gy=240;
+  el("rect",{x:gx-62,y:gy-70,width:124,height:84,rx:8,fill:"#fff",stroke:"#55606f","stroke-width":2},s);
+  el("path",{d:"M"+(gx-46)+","+gy+" A46,46 0 0 1 "+(gx+46)+","+gy,fill:"none",stroke:"#b4bcc8","stroke-width":2},s);
+  for(var k=-3;k<=3;k++){var a=(-90+k*22)*Math.PI/180;el("line",{x1:gx+Math.cos(a)*46,y1:gy+Math.sin(a)*46,x2:gx+Math.cos(a)*(k===0?34:39),y2:gy+Math.sin(a)*(k===0?34:39),stroke:"#8b94a1","stroke-width":k===0?2.5:1.5},s);}
+  txt(s,gx,gy-74,"검류계",{"text-anchor":"middle","font-size":13,fill:"#55606f"});
+  var nd=el("line",{x1:gx,y1:gy,x2:gx,y2:gy-42,stroke:"#d6453a","stroke-width":3,"stroke-linecap":"round"},s);
+  el("circle",{cx:gx,cy:gy,r:4,fill:"#1d2330"},s);
+  var vArrow=el("g",{opacity:0},s);
+  var vT=txt(s,0,cy-32,"",{"text-anchor":"middle","font-size":13,fill:"#1d2330","font-weight":700},vArrow);
+  function setNeedle(deg){nd.setAttribute("transform","rotate("+deg.toFixed(1)+" "+gx+" "+gy+")");}
+  function setBtns(){ $("faSlow").disabled=busy||magX!==X_OUT; $("faFast").disabled=busy||magX!==X_OUT; $("faOut").disabled=busy||magX!==X_IN; }
+  function move(x1,dur,label){
+    busy=true;setBtns();var x0=magX;var maxDeg=0;
+    $("faTag").textContent="자석 "+label+" 중";
+    anim(dur,function(p){
+      var e=p*p*(3-2*p);magX=x0+(x1-x0)*e;mag.setAttribute("transform","translate("+magX.toFixed(1)+" 0)");
+      var v=(x1-x0)*6*p*(1-p)/dur; /* px/ms */
+      var deg=clamp(v*130,-70,70);setNeedle(deg);if(Math.abs(deg)>Math.abs(maxDeg))maxDeg=deg;
+      glow.setAttribute("opacity",clamp(Math.abs(deg)/60,0,1).toFixed(2));
+    },function(){
+      magX=x1;setNeedle(0);glow.setAttribute("opacity",0);busy=false;setBtns();
+      $("faTag").textContent="자석 정지 · 전류 0 (방금 최대 "+(maxDeg>0?"+":"")+Math.round(maxDeg)+"° 흔들림)";
+    });
+  }
+  $("faSlow").addEventListener("click",function(){move(X_IN,2600,"천천히 넣는");});
+  $("faFast").addEventListener("click",function(){move(X_IN,800,"빠르게 넣는");});
+  $("faOut").addEventListener("click",function(){move(X_OUT,1200,"빼는");});
+  setNeedle(0);setBtns();
+})();
+
+/* ---------- 가우스 (전기) ---------- */
+(function(){
+  var s=$("figGe"),cx=320,cy=150;
+  var surf="M"+(cx+78)+","+cy;
+  for(var i=1;i<=48;i++){var a=i/48*2*Math.PI;var r=78+16*Math.sin(3*a)+9*Math.cos(5*a+1);surf+=" L"+(cx+Math.cos(a)*r).toFixed(1)+","+(cy+Math.sin(a)*r).toFixed(1);}
+  var g=el("g",{},s);
+  el("path",{d:surf+" Z",fill:"#7fb0ec","fill-opacity":0.08,stroke:"#55606f","stroke-width":1.8,"stroke-dasharray":"6 5"},s);
+  txt(s,cx+112,cy-92,"닫힌 면",{"font-size":13,fill:"#55606f"});
+  var ch=el("g",{},s);
+  function draw(q){
+    while(g.firstChild)g.removeChild(g.firstChild);while(ch.firstChild)ch.removeChild(ch.firstChild);
+    var n=10*Math.abs(q);
+    for(var i=0;i<n;i++){var a=(i+0.5)/n*2*Math.PI;
+      el("line",{x1:cx+Math.cos(a)*24,y1:cy+Math.sin(a)*24,x2:cx+Math.cos(a)*140,y2:cy+Math.sin(a)*140,stroke:"#d48a00","stroke-width":2},g);
+      arrowTri(g,cx+Math.cos(a)*118,cy+Math.sin(a)*118,q>0?a:a+Math.PI,8,"#d48a00");
+      arrowTri(g,cx+Math.cos(a)*52,cy+Math.sin(a)*52,q>0?a:a+Math.PI,7,"#d48a00");}
+    el("circle",{cx:cx,cy:cy,r:q===2?22:18,fill:q>0?"#d6453a":"#2f6fd8"},ch);
+    txt(ch,cx,cy+7,q>0?(q===2?"+2":"+"):"−",{"text-anchor":"middle","font-size":q===2?16:22,"font-weight":700,fill:"#fff"});
+    $("geTag").textContent="점선 면을 뚫고 나가는 선 "+(q>0?"+":"−")+n+"개"+(q<0?" (들어오는 선)":"");
+  }
+  draw(1);
+  segInit("geSeg",function(b){draw(parseInt(b.dataset.q,10));});
+})();
+
+/* ---------- 자석 자르기 ---------- */
+(function(){
+  var s=$("figMg"),n=1,cy=140;
+  var g=el("g",{},s);
+  function draw(n){
+    while(g.firstChild)g.removeChild(g.firstChild);
+    var L=300,gap=n>1?40:0,w=(L-gap*(n-1))/n,x0=320-L/2;
+    var lines=el("g",{},g),mags=el("g",{},g);
+    for(var i=0;i<n;i++){var x=x0+i*(w+gap),mcx=x+w/2;
+      for(var k=1;k<=3;k++){var rx=w/2+k*(w*0.16+9),ry=14+k*(w*0.1+9);
+        el("ellipse",{cx:mcx,cy:cy,rx:rx,ry:ry,fill:"none",stroke:"#1f6fd1","stroke-width":1.6,opacity:0.75},lines);
+        arrowTri(lines,mcx,cy-ry,Math.PI,7,"#1f6fd1");arrowTri(lines,mcx,cy+ry,Math.PI,7,"#1f6fd1");}
+      el("rect",{x:x,y:cy-15,width:w/2,height:30,fill:"#3a7bd5"},mags);
+      el("rect",{x:x+w/2,y:cy-15,width:w/2,height:30,fill:"#d84a3a"},mags);
+      el("rect",{x:x,y:cy-15,width:w,height:30,fill:"none",stroke:"#1d2330","stroke-width":1},mags);
+      var fs=n>=8?11:15;
+      txt(mags,x+w/4,cy+5,"S",{"text-anchor":"middle","font-size":fs,"font-weight":700,fill:"#fff"});
+      txt(mags,x+w*3/4,cy+5,"N",{"text-anchor":"middle","font-size":fs,"font-weight":700,fill:"#fff"});
+      arrowTri(mags,x+w/2,cy,0,6,"#fff");
+    }
+    g.style.animation="none";void g.getBoundingClientRect();g.style.animation="mgfade .6s ease";
+    $("mgTag").textContent="자석 "+n+"개 · N–S 쌍 "+n+"개 · 홀극 0개";
+    $("mgCut").disabled=n>=8;$("mgCut").textContent=n>=8?"더 자르기 생략":"▶ 반으로 자르기";
+  }
+  var st=document.createElement("style");st.textContent="@keyframes mgfade{from{opacity:0}to{opacity:1}}";document.head.appendChild(st);
+  draw(1);
+  $("mgCut").addEventListener("click",function(){n=Math.min(8,n*2);draw(n);});
+  $("mgReset").addEventListener("click",function(){n=1;draw(n);});
+})();
+
+/* ---------- 축전기 ---------- */
+(function(){
+  var s=$("figCp"),cy=150,mode=0,running=false;
+  var flowL=el("line",{x1:30,y1:cy,x2:296,y2:cy,stroke:"#b8733a","stroke-width":7},s);
+  var flowR=el("line",{x1:344,y1:cy,x2:610,y2:cy,stroke:"#b8733a","stroke-width":7},s);
+  var dotsL=el("line",{x1:30,y1:cy,x2:296,y2:cy,stroke:"#ffe08a","stroke-width":3,"stroke-dasharray":"3 14",opacity:0},s);
+  var dotsR=el("line",{x1:344,y1:cy,x2:610,y2:cy,stroke:"#ffe08a","stroke-width":3,"stroke-dasharray":"3 14",opacity:0},s);
+  txt(s,30,cy+38,"← 전지 (+)",{"font-size":13,fill:"#55606f"});
+  txt(s,610,cy+38,"전지 (−) →",{"font-size":13,fill:"#55606f","text-anchor":"end"});
+  var wireRings=el("g",{opacity:0},s);
+  [110,215,425,530].forEach(function(x){el("ellipse",{cx:x,cy:cy,rx:10,ry:44,fill:"none",stroke:"#1f6fd1","stroke-width":2.5},wireRings);arrowTri(wireRings,x+10,cy,Math.PI/2,7,"#1f6fd1");});
+  var Eg=el("g",{},s);
+  el("rect",{x:296,y:70,width:9,height:160,fill:"#8b6a4c"},s);
+  el("rect",{x:335,y:70,width:9,height:160,fill:"#8b6a4c"},s);
+  var sg=el("g",{},s);
+  var gapRing=el("g",{opacity:0},s);
+  var gapEll=el("ellipse",{cx:320,cy:cy,rx:9,ry:62,fill:"none","stroke-width":2.5},gapRing);
+  var gapArr=arrowTri(gapRing,329,cy,Math.PI/2,7,"#1f6fd1");
+  var q=txt(s,320,58,"",{"text-anchor":"middle","font-size":14,"font-weight":700});
+  txt(s,320,262,"두 판 사이 틈",{"text-anchor":"middle","font-size":13,fill:"#55606f"});
+  function render(Q,I){
+    while(Eg.firstChild)Eg.removeChild(Eg.firstChild);while(sg.firstChild)sg.removeChild(sg.firstChild);
+    var len=24*Q;
+    if(len>3){[92,121,150,179,208].forEach(function(y){el("line",{x1:306,y1:y,x2:306+len,y2:y,stroke:"#d48a00","stroke-width":2.5},Eg);arrowTri(Eg,306+len,y,0,6,"#d48a00");});}
+    var nq=Math.round(Q*6);
+    for(var i=0;i<nq;i++){var y=80+i*26;txt(sg,300.5,y+8,"+",{"text-anchor":"middle","font-size":11,"font-weight":700,fill:"#fff"});txt(sg,339.5,y+8,"−",{"text-anchor":"middle","font-size":11,"font-weight":700,fill:"#fff"});}
+    wireRings.setAttribute("opacity",I.toFixed(2));
+    dotsL.setAttribute("opacity",I>0.02?1:0);dotsR.setAttribute("opacity",I>0.02?1:0);
+    if(mode===1){gapEll.setAttribute("stroke","#1f6fd1");gapEll.setAttribute("stroke-dasharray","");gapArr.setAttribute("fill","#1f6fd1");gapRing.setAttribute("opacity",I.toFixed(2));q.textContent=I>0.05?"변하는 E가 자기장을 만듦":"";q.setAttribute("fill","#1f6fd1");}
+    else{gapEll.setAttribute("stroke","#d6453a");gapEll.setAttribute("stroke-dasharray","5 5");gapArr.setAttribute("fill","none");gapRing.setAttribute("opacity",I>0.05?0.9:0);q.textContent=I>0.05?"원래 식: 여기서 자기장 = 0 ?":"";q.setAttribute("fill","#d6453a");}
+    $("cpTag1").textContent="전선 전류 I = "+I.toFixed(2);
+    $("cpTag2").textContent="틈의 ε₀A·dE/dt = "+I.toFixed(2)+(mode===0?" (원래 식은 무시)":" (자기장을 만듦)");
+  }
+  var Qn=0,In=0,off=0;
+  render(0,0);
+  segInit("cpSeg",function(b){mode=parseInt(b.dataset.m,10);render(Qn,In);});
+  $("cpRun").addEventListener("click",function(){
+    if(running)return;running=true;$("cpRun").disabled=true;
+    var tau=1300;
+    anim(6500,function(p,ms){Qn=1-Math.exp(-ms/tau);In=Math.exp(-ms/tau);off-=In*2.2;dotsL.setAttribute("stroke-dashoffset",off.toFixed(1));dotsR.setAttribute("stroke-dashoffset",off.toFixed(1));render(Qn,In);},
+      function(){In=0;render(Qn,0);setTimeout(function(){Qn=0;render(0,0);running=false;$("cpRun").disabled=false;$("cpRun").textContent="▶ 다시 충전하기";},1500);});
+  });
+})();
+
+/* ---------- 전자기파 ---------- */
+(function(){
+  var cv=$("cvWave"),ctx=cv.getContext("2d"),W=640,H=300,cy=160,v=0.13;
+  function fit(){var dpr=Math.min(window.devicePixelRatio||1,2);cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}
+  fit();
+  var mode=null,t0=0,k=2,raf=null,endT=0;
+  function T(){return 2400/k;}
+  function src(tau){if(tau<0)return 0;if(mode==="pulse"){return tau<=T()?Math.sin(2*Math.PI*tau/T()):0;}if(mode==="cont"){return tau<=10000?Math.sin(2*Math.PI*tau/T()):0;}return 0;}
+  function arrow(x1,y1,x2,y2,col,w){var dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();if(L>7){var a=Math.atan2(dy,dx),h=Math.min(8,L*0.45);ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-h*Math.cos(a-0.45),y2-h*Math.sin(a-0.45));ctx.lineTo(x2-h*Math.cos(a+0.45),y2-h*Math.sin(a+0.45));ctx.closePath();ctx.fill();}}
+  var BX=-0.42,BY=0.5;
+  function draw(t){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle="#fcfdff";ctx.fillRect(0,0,W,H);
+    /* 축과 범례 */
+    ctx.strokeStyle="#c9d1dc";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(60,cy);ctx.lineTo(630,cy);ctx.stroke();
+    arrow(560,cy,628,cy,"#8b94a1",1.5);
+    ctx.font="13px sans-serif";ctx.fillStyle="#55606f";ctx.fillText("진행 방향 →",548,H-12);
+    ctx.fillStyle="#d48a00";ctx.fillText("■ 전기장 E (위아래)",12,22);
+    ctx.fillStyle="#1f6fd1";ctx.fillText("■ 자기장 B (앞뒤, 비스듬히 그림)",160,22);
+    var s0=src(t);
+    /* 안테나 */
+    ctx.strokeStyle="#b8733a";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(40,cy-70);ctx.lineTo(40,cy+70);ctx.stroke();
+    ctx.fillStyle="#d6453a";ctx.beginPath();ctx.arc(40,cy-55*s0,7,0,7);ctx.fill();
+    ctx.fillStyle="#55606f";ctx.fillText("안테나",18,cy+92);
+    /* 장 */
+    var eTips=[],bTips=[];
+    for(var x=66;x<=620;x+=13){
+      var val=src(t-(x-46)/v);
+      eTips.push([x,cy-78*val]);bTips.push([x+BX*62*val,cy+BY*62*val]);
+      if(Math.abs(val)>0.04){arrow(x,cy,x+BX*62*val,cy+BY*62*val,"rgba(31,111,209,.9)",2);arrow(x,cy,x,cy-78*val,"#d48a00",2.4);}
+    }
+    ctx.lineWidth=1.2;ctx.strokeStyle="rgba(212,138,0,.45)";ctx.beginPath();eTips.forEach(function(p,i){if(i)ctx.lineTo(p[0],p[1]);else ctx.moveTo(p[0],p[1]);});ctx.stroke();
+    ctx.strokeStyle="rgba(31,111,209,.4)";ctx.beginPath();bTips.forEach(function(p,i){if(i)ctx.lineTo(p[0],p[1]);else ctx.moveTo(p[0],p[1]);});ctx.stroke();
+    /* 파장 표시 */
+    if(mode==="cont"){var lam=v*T();var front=46+v*t;var xa=Math.min(front,560)-lam*1.25;
+      /* 마루 위치에 맞춤 */
+      var n=Math.floor((t-(xa-46)/v)/T()-0.25);var crestX=46+v*(t-(n+0.25)*T());
+      if(crestX-lam>70&&crestX<=620&&t>(crestX-46)/v){var y=48;ctx.strokeStyle="#1d2330";ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(crestX-lam,y);ctx.lineTo(crestX,y);ctx.moveTo(crestX-lam,y-6);ctx.lineTo(crestX-lam,y+6);ctx.moveTo(crestX,y-6);ctx.lineTo(crestX,y+6);ctx.stroke();ctx.fillStyle="#1d2330";ctx.font="bold 14px sans-serif";ctx.fillText("λ",crestX-lam/2-4,y-8);
+        ctx.setLineDash([3,4]);ctx.strokeStyle="#8b94a1";ctx.beginPath();ctx.moveTo(crestX-lam,y+6);ctx.lineTo(crestX-lam,cy-78);ctx.moveTo(crestX,y+6);ctx.lineTo(crestX,cy-78);ctx.stroke();ctx.setLineDash([]);}}
+  }
+  function loop(ts){var t=ts-t0;draw(t);if(t<endT)raf=requestAnimationFrame(loop);else{raf=null;mode=null;draw(0);btns(false);}}
+  function btns(b){$("wvPulse").disabled=b;$("wvCont").disabled=b;$("wvK").disabled=b;}
+  function start(m){if(raf)cancelAnimationFrame(raf);mode=m;btns(true);var dur=m==="pulse"?T():10000;endT=dur+(630-46)/v+200;raf=requestAnimationFrame(function(ts){t0=ts;loop(ts);});}
+  $("wvPulse").addEventListener("click",function(){start("pulse");});
+  $("wvCont").addEventListener("click",function(){start("cont");});
+  $("wvStop").addEventListener("click",function(){if(raf)cancelAnimationFrame(raf);raf=null;mode=null;draw(0);btns(false);});
+  function upd(){k=parseInt($("wvK").value,10);$("wvKv").textContent=k+"배";$("wvTag").textContent="흔드는 빠르기 "+k+"배 → 파장 1/"+k+" (퍼지는 속도는 그대로)";}
+  $("wvK").addEventListener("input",upd);upd();
+  draw(0);
+  window.addEventListener("resize",function(){fit();if(!raf)draw(0);});
+})();
+
+/* ---------- 광속 단계 ---------- */
+(function(){
+  var li=$("spSteps").querySelectorAll("li"),n=1;
+  function upd(){li.forEach(function(x,i){x.classList.toggle("hide",i>=n);});$("spTag").textContent=n+" / "+li.length+"단계";$("spNext").disabled=n>=li.length;}
+  $("spNext").addEventListener("click",function(){n=Math.min(li.length,n+1);upd();});
+  $("spReset").addEventListener("click",function(){n=1;upd();});
+  upd();
+})();
+
+/* ---------- 헤르츠 ---------- */
+(function(){
+  var s=$("figHz"),gx=240,gy=140,match=1,busy=false;
+  el("rect",{x:30,y:200,width:120,height:50,rx:6,fill:"#e9eef6",stroke:"#55606f","stroke-width":1.5},s);
+  txt(s,90,230,"유도 코일",{"text-anchor":"middle","font-size":13,fill:"#1d2330"});
+  el("polyline",{points:"70,200 70,180 200,180 200,146",fill:"none",stroke:"#7d8796","stroke-width":1.6},s);
+  el("polyline",{points:"110,200 110,190 280,190 280,146",fill:"none",stroke:"#7d8796","stroke-width":1.6},s);
+  var rodL=el("line",{x1:150,y1:gy,x2:234,y2:gy,stroke:"#b8733a","stroke-width":5},s);
+  var rodR=el("line",{x1:246,y1:gy,x2:330,y2:gy,stroke:"#b8733a","stroke-width":5},s);
+  el("circle",{cx:142,cy:gy,r:16,fill:"#d9a46c",stroke:"#8a5a30","stroke-width":2},s);
+  el("circle",{cx:338,cy:gy,r:16,fill:"#d9a46c",stroke:"#8a5a30","stroke-width":2},s);
+  el("circle",{cx:234,cy:gy,r:4,fill:"#8a5a30"},s);el("circle",{cx:246,cy:gy,r:4,fill:"#8a5a30"},s);
+  txt(s,240,50,"송신: 다이폴",{"text-anchor":"middle","font-size":14,"font-weight":700,fill:"#1d2330"});
+  txt(s,240,122,"불꽃 간극",{"text-anchor":"middle","font-size":12,fill:"#55606f"});
+  var ripples=el("g",{},s);
+  var rcx=520,ring=el("path",{fill:"none",stroke:"#b8733a","stroke-width":4,"stroke-linecap":"round"},s);
+  var rLbl=txt(s,520,50,"수신: 고리",{"text-anchor":"middle","font-size":14,"font-weight":700,fill:"#1d2330"});
+  function star(cx,cy,r,col){var p=[];for(var i=0;i<16;i++){var a=i*Math.PI/8,rr=i%2?r*0.38:r;p.push((cx+Math.cos(a)*rr).toFixed(1)+","+(cy+Math.sin(a)*rr).toFixed(1));}return el("polygon",{points:p.join(" "),fill:col,opacity:0},s);}
+  var sp1=star(gx,gy,18,"#ffd200");
+  var sp2=null,rr=58;
+  function drawRing(){rr=match?58:30;var a1=Math.PI+0.13,a2=Math.PI-0.13;
+    var x1=rcx+Math.cos(a1)*rr,y1=gy+Math.sin(a1)*rr,x2=rcx+Math.cos(a2)*rr,y2=gy+Math.sin(a2)*rr;
+    ring.setAttribute("d","M"+x1.toFixed(1)+","+y1.toFixed(1)+" A"+rr+","+rr+" 0 1 1 "+x2.toFixed(1)+","+y2.toFixed(1));
+    if(sp2)s.removeChild(sp2);sp2=star(rcx-rr,gy,match?14:6,"#ffd200");
+    rLbl.textContent=match?"수신: 고리 (공진 맞춤)":"수신: 고리 (공진 어긋남)";}
+  drawRing();
+  segInit("hzSeg",function(b){match=parseInt(b.dataset.r,10);drawRing();$("hzTag").textContent="대기 중";});
+  $("hzRun").addEventListener("click",function(){
+    if(busy)return;busy=true;$("hzRun").disabled=true;$("hzTag").textContent="송신 불꽃 → 전파 진행 중";
+    while(ripples.firstChild)ripples.removeChild(ripples.firstChild);
+    var cs=[0,1,2].map(function(){return el("circle",{cx:gx,cy:gy,r:0,fill:"none",stroke:"#1f6fd1","stroke-width":2.5,"stroke-dasharray":"8 6",opacity:0},ripples);});
+    var dist=rcx-rr-gx,hit=false;
+    anim(2600,function(p,ms){
+      sp1.setAttribute("opacity",ms<380?(Math.random()*0.5+0.5).toFixed(2):0);
+      cs.forEach(function(c,i){var r=(ms-i*170)*0.19;if(r<0){c.setAttribute("opacity",0);return;}c.setAttribute("r",r.toFixed(1));c.setAttribute("opacity",clamp(1-r/420,0,1).toFixed(2));});
+      var r0=ms*0.19;
+      if(r0>=dist&&r0<dist+90){hit=true;sp2.setAttribute("opacity",match?(Math.random()*0.5+0.5).toFixed(2):0.12);}else sp2.setAttribute("opacity",0);
+    },function(){
+      cs.forEach(function(c){c.setAttribute("opacity",0);});sp1.setAttribute("opacity",0);sp2.setAttribute("opacity",0);
+      $("hzTag").textContent=match?"응답 불꽃 관측 · 전자기파 도달":"응답 불꽃 없음 · 공진이 맞지 않음";
+      busy=false;$("hzRun").disabled=false;
+    });
+  });
+})();
+
+/* ---------- 스펙트럼 ---------- */
+(function(){
+  var s=$("figSp"),X0=20,PX=37.5,by=104,bh=36;
+  function xl(lam){return X0+(4-Math.log10(lam))*PX;}
+  var regs=[["전파",1e4,1e-1,"#cfe2fa"],["마이크로파",1e-1,1e-3,"#b9d5f3"],["적외선",1e-3,7.8e-7,"#f6c8b8"],["",7.8e-7,3.8e-7,"vis"],["자외선",3.8e-7,1e-8,"#ddd0f3"],["X선",1e-8,1e-11,"#d6dbe3"],["감마선",1e-11,1e-12,"#c3c9d3"]];
+  var defs=el("defs",{},s),lg=el("linearGradient",{id:"visg",x1:0,x2:1,y1:0,y2:0},defs);
+  ["#e0262a","#f28a1c","#f5e11d","#3cbf4a","#2a7de1","#7b3fd6"].forEach(function(c,i){el("stop",{offset:(i/5*100)+"%","stop-color":c},lg);});
+  regs.forEach(function(r){var x1=xl(r[1]),x2=xl(r[2]);el("rect",{x:x1,y:by,width:x2-x1,height:bh,fill:r[3]==="vis"?"url(#visg)":r[3]},s);if(r[0])txt(s,(x1+x2)/2,by+bh/2+5,r[0],{"text-anchor":"middle","font-size":12.5,fill:"#1d2330","font-weight":600});});
+  el("rect",{x:X0,y:by,width:600,height:bh,fill:"none",stroke:"#7d8796"},s);
+  var vx=(xl(7.8e-7)+xl(3.8e-7))/2;el("line",{x1:vx,y1:by,x2:vx,y2:by-14,stroke:"#1d2330","stroke-width":1},s);txt(s,vx,by-20,"가시광선",{"text-anchor":"middle","font-size":12,fill:"#1d2330","font-weight":700});
+  [[1e3,"1 km"],[1,"1 m"],[1e-3,"1 mm"],[1e-6,"1 μm"],[1e-9,"1 nm"],[1e-12,"1 pm"]].forEach(function(d){var x=xl(d[0]);el("line",{x1:x,y1:by+bh,x2:x,y2:by+bh+6,stroke:"#55606f"},s);txt(s,x,by+bh+50,d[1],{"text-anchor":"middle","font-size":11.5,fill:"#55606f"});});
+  txt(s,320,by+bh+68,"← 파장이 길다 (주파수 낮음)            파장이 짧다 (주파수 높음) →",{"text-anchor":"middle","font-size":11.5,fill:"#8b94a1"});
+  /* 아마추어 대역 */
+  var hfA=xl(300/1.8),hfB=xl(300/29.7);
+  el("path",{d:"M"+hfA+","+(by-6)+" L"+hfA+","+(by-14)+" L"+hfB+","+(by-14)+" L"+hfB+","+(by-6),fill:"none",stroke:"#2a9d6a","stroke-width":1.8},s);
+  txt(s,X0,by-20,"HF 아마추어 160~10 m",{"text-anchor":"start","font-size":11.5,fill:"#1f7a52","font-weight":700});
+  [300/144,300/430].forEach(function(l){var x=xl(l);el("line",{x1:x,y1:by-2,x2:x,y2:by-32,stroke:"#2a9d6a","stroke-width":1.5},s);});txt(s,xl(300/144)-4,by-38,"2 m · 70 cm",{"font-size":11.5,fill:"#1f7a52","font-weight":700});
+  var mk=el("g",{},s);
+  function fmt(m){if(m>=1000)return (m/1000).toPrecision(3)+" km";if(m>=1)return m.toPrecision(4).replace(/\.?0+$/,"")+" m";if(m>=1e-3)return (m*100).toPrecision(3)+" cm";if(m>=1e-6)return (m*1e6).toPrecision(3)+" μm";if(m>=1e-9)return (m*1e9).toPrecision(3)+" nm";return (m*1e12).toPrecision(3)+" pm";}
+  function calc(){
+    var f=parseFloat($("fIn").value);var out=$("fOut");
+    if(!(f>0)){out.innerHTML="<tr><td>0보다 큰 주파수를 넣어야 합니다.</td></tr>";return;}
+    var lam=299.792458/f;
+    out.innerHTML="<tr><th>파장 λ</th><th>반파장 λ/2</th><th>1/4 파장</th><th>근거리장 경계 λ/2π</th></tr><tr><td>"+fmt(lam)+"</td><td>"+fmt(lam/2)+"</td><td>"+fmt(lam/4)+"</td><td>"+fmt(lam/(2*Math.PI))+"</td></tr>";
+    while(mk.firstChild)mk.removeChild(mk.firstChild);
+    var x=clamp(xl(lam),X0,X0+600);
+    el("line",{x1:x,y1:by-4,x2:x,y2:by+bh+4,stroke:"#d6453a","stroke-width":2.5},mk);
+    el("polygon",{points:(x-7)+","+(by+bh+18)+" "+(x+7)+","+(by+bh+18)+" "+x+","+(by+bh+6),fill:"#d6453a"},mk);
+    txt(mk,clamp(x,60,580),by+bh+32,f+" MHz",{"text-anchor":"middle","font-size":12,fill:"#d6453a","font-weight":700});
+  }
+  $("fGo").addEventListener("click",calc);
+  $("fIn").addEventListener("keydown",function(e){if(e.key==="Enter")calc();});
+  calc();
+})();
+
+/* ---------- 듣기 ---------- */
+var SCRIPT={
+s0:[
+"맥스웰 방정식은 전기와 자기에 관한 네 개의 식입니다.",
+"물리학과 건물 벽이나 티셔츠에 장식처럼 적혀 있는 경우가 많지만, 이 네 줄에는 전기와 자기가 하나의 현상이라는 사실, 그리고 그 결과로 전파가 생긴다는 사실이 담겨 있습니다.",
+"안테나에서 나가는 모든 전파, 휴대전화와 와이파이의 신호, 그리고 햇빛까지 모두 이 네 식을 따릅니다.",
+"리처드 파인만은 만 년 뒤 이 시대를 돌아볼 때 가장 중요한 사건으로 남을 것이 맥스웰의 전자기 법칙 발견이라고 평가했습니다.",
+"지금부터 식이 만들어진 역사의 순서를 따라 한 줄씩 짚어 가면서, 각 식이 무선 장비의 어느 부분에서 다시 나타나는지를 함께 설명합니다."
+],
+s1:[
+"먼저 네 식의 모양을 봅니다.",
+"첫째 식은 나블라 점 이는 로 나누기 엡실론 영입니다.",
+"둘째 식은 나블라 점 비는 영입니다.",
+"셋째 식은 나블라 곱하기 이는 마이너스, 비의 시간 변화율입니다.",
+"넷째 식은 나블라 곱하기 비는 뮤 영 제이 더하기, 뮤 영 엡실론 영 곱하기 이의 시간 변화율입니다.",
+"여기서 대문자 이는 전기장이고, 대문자 비는 자기장입니다.",
+"장이라는 말은, 공간의 모든 점마다 크기와 방향을 가진 화살표가 하나씩 놓여 있다고 보는 생각입니다.",
+"로는 전하가 얼마나 빽빽하게 모여 있는지를 나타내는 전하 밀도이고, 제이는 전류가 얼마나 흐르는지를 나타내는 전류 밀도입니다.",
+"엡실론 영과 뮤 영은 진공의 성질을 나타내는 두 상수입니다. 엡실론 영은 진공이 전기장을 얼마나 받아들이는지를, 뮤 영은 자기장을 얼마나 받아들이는지를 나타냅니다.",
+"이 두 숫자는 나중에 빛의 속도를 계산할 때 다시 등장하므로 기억해 둘 필요가 있습니다.",
+"식 앞에 붙은 역삼각형 기호는 나블라라고 부릅니다. 공간에서 가로, 세로, 높이 방향으로 각각 얼마나 변하는지를 한데 묶어 계산하는 기호입니다.",
+"나블라 뒤에 점이 붙으면 발산, 곱하기 기호가 붙으면 회전이라고 읽습니다.",
+"발산은 한 점 둘레에 아주 작은 상자를 씌웠을 때, 상자 밖으로 나가는 화살표가 들어오는 화살표보다 얼마나 많은지를 세고, 그것을 상자의 부피로 나눈 값입니다.",
+"샘물이 솟아나는 곳처럼 장이 뿜어져 나오는 곳에서는 발산이 양수가 되고, 빨려 들어가는 곳에서는 음수가 되며, 들어온 만큼 나가면 영이 됩니다.",
+"회전은 같은 점에 아주 작은 바람개비를 놓았을 때 그 바람개비가 얼마나 세게 도는지를 나타냅니다.",
+"화살표가 한 방향으로 나란히 흐르기만 하면 바람개비는 돌지 않고, 소용돌이처럼 감아 돌 때 바람개비가 돕니다. 회전은 크기와 함께 방향도 가진 양으로, 바람개비가 가장 세게 도는 축의 방향이 회전의 방향입니다.",
+"그래서 위의 두 식은 장이 어디에서 시작되는지를 말하고, 아래 두 식은 장이 어떻게 감아 도는지를 말합니다.",
+"같은 내용을 넓은 영역 단위로 쓴 것이 적분형입니다. 첫째와 둘째 식은 닫힌 면 전체에 걸친 면적분으로, 셋째와 넷째 식은 닫힌 고리 한 바퀴를 따라가는 선적분으로 씁니다.",
+"적분형은 닫힌 면 전체를 뚫고 나가는 양, 또는 닫힌 고리를 따라 한 바퀴 도는 양으로 말하기 때문에, 그림으로 이해하기가 더 쉽습니다.",
+"이 글의 그림들은 주로 이 적분형의 관점, 곧 면을 뚫고 나가는 선의 개수와 고리를 감아 도는 양으로 그렸습니다."
+],
+s2:[
+"천팔백년대 초까지 전기와 자기는 서로 상관없는 두 학문이었습니다.",
+"전기는 정전기 불꽃과 전지, 번개를 다뤘고, 자기는 자철석과 나침반을 다뤘습니다.",
+"하나는 전하에 관한 현상이고 다른 하나는 쇳덩어리에 관한 현상이라, 둘을 연결할 근거가 없어 보였습니다.",
+"천팔백이십 년, 덴마크의 물리학자 한스 크리스티안 외르스테드가 강의 중에 전선 가까이 나침반을 두고 전류를 흘렸습니다.",
+"그러자 나침반 바늘이 옆으로 돌아갔습니다. 근처에 자석은 없었습니다. 전선을 따라 흐르는 전류만으로 바늘이 움직인 것입니다.",
+"그림의 왼쪽은 위에서 내려다본 모습입니다. 남북으로 놓인 전선 바로 아래에 나침반이 있고, 전류가 없을 때 바늘은 지구 자기장을 따라 북쪽을 가리킵니다.",
+"전류를 북쪽으로 흘리면 바늘의 엔극이 서쪽으로 돌고, 남쪽으로 흘리면 동쪽으로 돕니다.",
+"그림의 오른쪽은 전선을 자른 단면입니다. 자기장은 전선을 중심으로 한 동심원을 그리며, 전선에서 멀어질수록 약해집니다.",
+"자기장의 방향은 오른손 법칙으로 정합니다. 오른손 엄지를 전류 방향으로 향하게 하고 전선을 감아쥐면, 나머지 네 손가락이 감기는 방향이 자기장의 방향입니다.",
+"전류가 흐르면 그 둘레에는 반드시 자기장이 생긴다는 이 사실이 넷째 식의 출발점입니다.",
+"무선 장비에서 인덕터, 곧 코일은 도선을 여러 번 감아 각 바퀴의 자기장이 겹치도록 해서 인덕턴스를 키운 부품입니다. 페라이트나 철심 코어가 있으면 자속이 코어 안으로 집중됩니다.",
+"안테나 도선에 고주파 전류가 흐를 때도 도선 둘레에는 같은 원리로 자기장이 생깁니다.",
+"동축 케이블은 심선과 외부 도체에 크기가 같고 방향이 반대인 전류가 흐르게 해서, 케이블 바깥에서는 두 자기장이 서로 상쇄되도록 만든 구조입니다."
+],
+s3:[
+"외르스테드의 발견 이후 이 연결을 가장 집요하게 파고든 사람은 영국의 마이클 패러데이였습니다.",
+"패러데이는 가난한 집안에서 태어나 정규 교육을 거의 받지 못했고, 십대에 제본소 견습공으로 일하면서 자신이 제본하던 책으로 과학을 독학했습니다.",
+"그는 미적분 같은 수학을 거의 쓰지 못했지만, 실험 솜씨와 물리적 직관은 당대 누구보다 뛰어났습니다.",
+"외르스테드가 전기로 자기를 만들었다면, 거꾸로 자기로 전기를 만들 수 있을까. 패러데이는 천팔백삼십일 년, 코일과 자석으로 이 질문에 답했습니다.",
+"자석을 코일 옆에 가만히 두면 아무 일도 일어나지 않습니다. 그런데 자석을 움직이는 순간 코일에 전류가 흐르고, 움직임을 멈추면 전류도 멈춥니다.",
+"그림에서 자석을 천천히 넣을 때와 빠르게 넣을 때를 비교하면, 빠를수록 검류계 바늘이 크게 흔들립니다. 자석을 빼면 바늘은 반대쪽으로 흔들립니다.",
+"자석이 코일 안에 완전히 들어가 멈춰 있으면, 강한 자기장 속에 있는데도 바늘은 영으로 돌아옵니다.",
+"즉 전기를 만드는 것은 자석 자체가 아니라 자기장의 변화입니다.",
+"이것을 식으로 쓰면, 코일에 생기는 전압은 코일을 지나는 자속이 변하는 빠르기에 비례하고, 감은 횟수에도 비례합니다.",
+"식 앞의 마이너스 부호는 렌츠의 법칙을 나타냅니다. 유도된 전류는 자신을 만든 변화를 방해하는 방향으로 흐릅니다.",
+"엔극을 코일에 밀어 넣으면 코일은 그쪽 끝에 엔극을 만들어 자석을 밀어냅니다. 만약 방향이 반대라면 자석이 저절로 빨려 들어가며 에너지가 공짜로 생기게 되므로, 이 부호는 에너지 보존의 결과이기도 합니다.",
+"한 점에서 쓴 셋째 식은, 자기장이 시간에 따라 변하는 곳에는 도선이 있든 없든 그 둘레를 감아 도는 전기장이 생긴다고 말합니다. 도선은 그 전기장을 전류로 확인하는 도구일 뿐입니다.",
+"패러데이는 또 하나의 중요한 생각을 남겼습니다.",
+"자석이 닿지도 않은 쇠를 끌어당기는 이유를 설명하려고, 자석 주위 공간을 채운 보이지 않는 힘의 선, 곧 역선을 떠올렸습니다.",
+"힘이 멀리서 곧바로 작용하는 것이 아니라 공간 자체가 어떤 상태가 되어 힘을 전달한다는 이 생각이 장이라는 개념의 시작입니다.",
+"당시의 수리물리학자들은 이 그림을 수학을 모르는 사람의 비유 정도로 여겼습니다.",
+"무선에서는 셋째 식을 곳곳에서 만납니다. 변압기는 일차 코일의 교류가 만든 변하는 자속으로 이차 코일에 전압을 만듭니다.",
+"발룬, 이 에프 에이치 더블유 안테나용 사십구 대 일 언언, 토로이드 코어 트랜스가 모두 같은 원리로 동작합니다.",
+"수신 쪽도 같습니다. 루프 안테나와 페라이트 막대 안테나는 전파 속 자기장의 변화가 코일에 만드는 전압을 받습니다.",
+"에이알디에프 팔십 미터 수신기의 페라이트 막대 안테나는, 전파의 자기장이 막대 축과 나란할 때 코일 단면을 지나는 자속이 가장 크게 변해서 신호가 가장 커집니다.",
+"반대로 막대 끝이 송신기를 향하면 자기장이 막대 축과 수직이 되어 코일을 지나는 자속이 변하지 않고, 신호가 사라지는 지점이 생깁니다. 방향 탐지는 이 지점을 이용합니다."
+],
+s4:[
+"패러데이의 역선을 진지하게 받아들인 사람이 스코틀랜드의 제임스 클러크 맥스웰입니다.",
+"맥스웰은 패러데이와 달리 수학에 매우 능했고, 패러데이가 그림으로 떠올린 장을 수학의 언어로 옮겼습니다.",
+"그 결과를 천팔백육십오 년 논문, 전자기장의 동역학 이론에 정리했습니다.",
+"첫째 식은 전하에 관한 법칙입니다. 전하는 주위 공간을 전기장으로 채웁니다. 양전하에서는 전기력선이 바깥으로 나가고, 음전하에서는 안으로 들어옵니다.",
+"그림의 점선은 전하를 둘러싼 아무 모양의 닫힌 면입니다. 면을 어떤 모양으로 그리든, 그 면을 뚫고 나가는 전기력선의 개수는 안에 든 전하의 양만으로 정해집니다.",
+"전하를 두 배로 하면 전기력선도 두 배가 되고, 음전하로 바꾸면 선의 방향이 안쪽으로 바뀝니다.",
+"전하를 중심으로 반지름 알인 구면을 그리면, 같은 수의 전기력선이 넓이 사 파이 알 제곱인 구면 전체로 퍼집니다.",
+"그래서 전기장의 세기는 거리의 제곱에 반비례합니다. 쿨롱의 법칙이 바로 이 첫째 식에서 나옵니다.",
+"둘째 식은 자기에 대한 같은 법칙인데, 오른쪽이 영입니다.",
+"자기력선은 어디에서도 시작하거나 끝나지 않고, 언제나 닫힌 고리를 이룹니다. 자석 밖에서는 엔극에서 에스극으로, 자석 안에서는 에스극에서 엔극으로 이어집니다.",
+"그래서 어떤 닫힌 면을 그려도 들어온 자기력선만큼 다시 나가고, 합은 영이 됩니다.",
+"막대자석을 반으로 자르면 엔극과 에스극이 따로 떨어지는 것이 아니라, 잘린 조각마다 새로운 엔극과 에스극이 생깁니다. 몇 번을 잘라도 마찬가지입니다.",
+"엔극이나 에스극 하나만 따로 있는 자기 홀극은 지금까지 한 번도 발견되지 않았습니다. 둘째 식은 이 관측 사실을 식으로 고정한 것입니다.",
+"무선과 연결하면, 다이폴 안테나 도선의 양 끝에는 고주파 전류를 따라 양전하와 음전하가 번갈아 쌓입니다. 양 끝에 전하가 가장 많이 모이므로 전압도 끝에서 가장 높습니다.",
+"다만 안테나 주변의 전기장 전체는 전하 분포만이 아니라 전류의 시간 변화도 함께 만듭니다.",
+"그리고 전파가 안테나를 떠난 먼 곳에서는, 전기력선이 전하에서 시작하지 않고 자기력선처럼 스스로 닫힌 고리를 이루며 퍼져 나갑니다.",
+"토로이드 코어가 자기장을 잘 가두는 것도 둘째 식과 관련이 있습니다. 자기력선은 고리를 이뤄야 하므로, 고리 모양 코어 안에 모여 바깥으로 거의 새지 않습니다."
+],
+s5:[
+"넷째 식은 외르스테드의 발견, 곧 전류가 자기장을 만든다는 것을 식으로 쓴 앙페르 법칙입니다.",
+"맥스웰 이전의 식은 나블라 곱하기 비는 뮤 영 제이, 이 하나뿐이었습니다.",
+"이 식에는 구멍이 있습니다. 오늘날 교과서는 그 구멍을 축전기 하나로 보여 줍니다. 맥스웰이 실제로 이 사고실험에서 출발한 것은 아니지만, 새 항이 왜 필요한지는 이 예에서 가장 분명하게 드러납니다.",
+"축전기는 두 금속판을 좁은 틈을 두고 마주 놓은 부품입니다.",
+"전지에 연결하면 판에 전하가 쌓이는 동안 전선에 전류가 흐르고, 전선 둘레에는 자기장이 생깁니다.",
+"그런데 두 판 사이의 틈으로는 전하가 건너가지 않습니다. 틈에는 전류가 없고, 쌓이는 전하 때문에 점점 커지는 전기장만 있습니다.",
+"틈 둘레에도 자기장이 있어야 하는데, 원래 식으로는 그 값을 일관되게 계산할 수 없습니다.",
+"문제는 더 분명하게 드러낼 수 있습니다. 전선 둘레에 고리를 하나 그리고, 그 고리를 가장자리로 하는 면을 생각합니다.",
+"적분형 넷째 식은 고리를 감아 도는 자기장을, 그 면을 뚫고 지나가는 전류로 계산합니다. 가장자리가 같으면 면의 모양은 상관이 없어야 합니다.",
+"그런데 평평한 면은 전선을 뚫고 지나가니 전류가 있다고 답하고, 같은 고리에서 주머니처럼 부풀린 면을 두 판 사이로 지나게 하면 전류를 하나도 만나지 않으니 전류가 없다고 답합니다.",
+"같은 고리에 두 개의 답이 나오는 것입니다. 식이 스스로 모순입니다.",
+"해결책은 변하는 전기장도 전류처럼 자기장을 만든다고 보고, 식에 뮤 영 엡실론 영 곱하기 전기장의 시간 변화율이라는 항을 더하는 것입니다. 이 항을 변위 전류라고 부릅니다.",
+"이 항이 정확히 맞아떨어지는지 확인해 봅니다.",
+"판의 넓이를 에이, 판에 쌓인 전하를 큐라고 하면, 틈의 전기장은 큐 나누기 엡실론 영 에이입니다.",
+"이것을 시간으로 미분하고 엡실론 영 에이를 곱하면, 큐의 시간 변화율, 곧 전선을 흐르는 전류 아이와 똑같아집니다.",
+"틈을 지나는 변위 전류가 전선의 전류와 정확히 같으므로, 부풀린 면으로 계산해도 답이 같아지고 자기장은 틈에서도 끊기지 않습니다.",
+"그림에서 원래 식과 수정한 식을 바꿔 가며 충전해 보면, 두 값이 늘 같다는 것과 원래 식이 그 값을 무시한다는 차이를 볼 수 있습니다.",
+"역사적으로 맥스웰이 이 항에 도달한 길은 조금 다릅니다. 그는 천팔백육십일 년에서 육십이 년 사이의 논문 물리적 역선에 관하여에서 변위 전류를 처음 도입했고, 출발점은 유전체의 분극이었습니다.",
+"유리 같은 절연체에 기전력을 걸면 각 부분의 양쪽이 반대 부호로 대전하며 전기가 조금 밀려난 상태가 되고, 이 변위가 늘거나 줄어드는 동안에는 전류와 같은 효과를 낸다고 보았습니다. 그리고 같은 일이 진공을 채운 매질에서도 일어난다고 가정했습니다.",
+"변위 전류가 만드는 자기장은 당시 기술로 직접 확인하기 어려웠습니다. 이 항을 포함한 이론이 예측한 전자기파를 헤르츠가 실험으로 확인하면서 이론 전체가 강하게 뒷받침되었지만, 헤르츠가 이 항 하나만을 따로 떼어 측정한 것은 아닙니다.",
+"무선에서 이 항은 매우 친숙합니다. 커패시터가 직류는 막지만 교류는 통과시키는 것처럼 보이는 이유가 바로 변위 전류입니다.",
+"주파수가 높을수록 전기장이 빨리 변하므로 변위 전류가 커지고, 그래서 커패시터의 리액턴스는 이 파이 에프 씨 분의 일로 작아집니다.",
+"예를 들어 백 피코패럿 커패시터에 칠 메가헤르츠, 진폭 일 볼트의 교류를 걸면, 리액턴스는 약 이백이십칠 옴이고 판 사이를 지나는 변위 전류의 진폭은 약 사 점 사 밀리암페어입니다.",
+"그러나 이 항의 진짜 의미는 따로 있습니다. 이 항을 더한 순간, 빈 공간에서 무엇이 가능해지는지가 핵심입니다."
+],
+s6:[
+"전하도 전류도 없는 빈 공간에서는 셋째 식과 넷째 식이 이렇게 남습니다. 변하는 자기장이 전기장을 만든다. 그리고 맥스웰이 고친 넷째 식, 변하는 전기장이 자기장을 만든다.",
+"두 식은 서로를 가리킵니다. 한쪽이 변하면 다른 쪽이 생깁니다.",
+"전하 하나를 잡고 한 번 흔든다고 생각해 봅니다. 전하가 움직이면 그 주위의 전기장이 변합니다.",
+"변하는 전기장은 넷째 식에 따라 그 옆에 자기장을 만듭니다.",
+"이 자기장은 영에서 생겨났으니 역시 변하고 있습니다. 변하는 자기장은 셋째 식에 따라 조금 더 바깥에 전기장을 만듭니다.",
+"그 전기장도 변하므로, 또 그 바깥에 자기장을 만듭니다.",
+"전기장과 자기장이 이어달리기를 하듯 번갈아 서로를 만들면서, 처음 흔든 곳에서 멀어져 갑니다. 이것이 전자기파를 떠올리는 가장 쉬운 그림입니다.",
+"이 과정에는 물이나 공기 같은 매질이 필요 없습니다.",
+"이어달리기라는 표현은 이해를 돕는 비유입니다. 전기장이 먼저 생기고 자기장이 뒤따르는 시간 순서가 있는 것이 아니라, 진공에서 두 식을 함께 만족하는 전기장과 자기장의 해가 파동 꼴로 퍼지는 것이고, 둘의 근원은 가속하는 전하입니다.",
+"그림에서 노란 화살표는 전기장, 파란 화살표는 자기장입니다. 화살표는 제자리에서 커졌다 작아질 뿐이고, 앞으로 나아가는 것은 그 모양입니다.",
+"멀리 퍼진 전파에서 전기장과 자기장은 서로 수직이고, 둘 다 진행 방향과도 수직입니다. 그리고 같은 순간에 함께 커지고 함께 작아집니다.",
+"전기장이 진동하는 방향을 편파라고 합니다. 이상적인 직선 안테나라면 수직으로 세우면 수직 편파, 눕히면 수평 편파가 됩니다. 실제 편파는 안테나 구조와 설치, 급전 방식에 따라 달라집니다.",
+"흔드는 빠르기를 바꿔 보면, 빨리 흔들수록 마루와 마루 사이, 곧 파장이 짧아집니다. 파동이 퍼지는 속도는 그대로이기 때문입니다.",
+"그래서 파장은 퍼지는 속도를 주파수로 나눈 값이 됩니다.",
+"송신 안테나가 하는 일이 정확히 이것입니다. 안테나 도선에 고주파 전류를 흘리면 도선 속 전자들이 일 초에 수백만 번 앞뒤로 흔들리고, 그 흔들림이 전파가 되어 퍼져 나갑니다.",
+"일정한 속도로 흐르는 직류 전류는 변하지 않는 자기장만 만들 뿐 전파를 내지 않습니다. 전파를 내는 것은 속도가 바뀌는 전하, 곧 가속하는 전하입니다.",
+"한 가지 덧붙이면, 그림처럼 전기장과 자기장이 함께 오르내리는 모습은 안테나에서 충분히 먼 원거리장의 모습입니다.",
+"파장에 비해 작은 안테나와 와이어 안테나에서는 대략 파장을 이 파이로 나눈 거리를 경계로 봅니다. 그 안쪽 반응성 근거리장에서는 전기장과 자기장의 박자가 어긋나서, 에너지가 안테나와 주변 공간 사이를 오가며 대부분 되돌아옵니다.",
+"칠 메가헤르츠라면 이 경계가 약 칠 미터입니다. 다만 이것은 대략적인 기준이고, 접시 안테나처럼 파장에 비해 큰 안테나는 경계를 다르게 잡습니다.",
+"안테나 가까이 있는 물체나 사람이 정재파비를 바꾸는 것도, 많은 경우 이 영역의 장과 결합해 안테나의 임피던스를 바꾸기 때문입니다."
+],
+s7:[
+"맥스웰은 이 파동이 얼마나 빨리 퍼지는지 계산했습니다.",
+"빈 공간의 두 식을 합치면 파동 방정식이라는 꼴의 식이 나옵니다. 공간에 대한 두 번 변화율이, 뮤 영 엡실론 영 곱하기 시간에 대한 두 번 변화율과 같다는 식입니다.",
+"줄의 진동, 소리, 물결이 모두 같은 꼴의 식을 따르고, 이 꼴에서 파동의 속도는 일 나누기 루트 계수로 정해집니다.",
+"그래서 전자기파의 속도는 일 나누기 루트 뮤 영 엡실론 영입니다.",
+"두 상수는 빛이나 파동과는 아무 관계 없이 실험대에서 측정된 값이었습니다. 엡실론 영은 두 전하 사이에 작용하는 힘에서, 뮤 영은 전류가 흐르는 두 전선 사이에 작용하는 힘에서 얻습니다.",
+"뮤 영은 약 일 점 이오육육 곱하기 십의 마이너스 육 승, 엡실론 영은 약 팔 점 팔오사 곱하기 십의 마이너스 십이 승입니다.",
+"둘을 곱하면 약 일 점 일일 곱하기 십의 마이너스 십칠 승이 됩니다.",
+"그 제곱근의 역수를 구하면 초속 약 삼억 미터, 곧 초속 삼십만 킬로미터가 나옵니다.",
+"이 값은 사람들이 이백 년 가까이 측정해 온 빛의 속도와 같습니다.",
+"천팔백육십오 년 논문에서 맥스웰이 비교한 값은 이렇습니다. 베버와 콜라우시가 천팔백오십육 년에 얻은 초속 약 삼십일만 킬로미터는 파동의 속도를 잰 것이 아니라, 정전 단위와 전자기 단위의 비입니다. 용량을 아는 축전기를 충전한 뒤 검류계로 방전시켜 얻은 값입니다.",
+"광속 측정값은 피조가 초속 약 삼십일만 오천 킬로미터, 푸코가 약 이십구만 팔천 킬로미터, 광행차에서 얻은 값이 약 삼십만 팔천 킬로미터였습니다.",
+"맥스웰은 전기 측정에서 빛은 눈금을 읽는 데만 쓰였고, 광속 측정에는 전기도 자기도 쓰이지 않았다는 점을 짚었습니다. 그리고 두 값이 충분히 일치한다고 보고, 빛은 전자기 법칙에 따라 장을 통해 퍼지는 전자기적 교란이라고 결론 내렸습니다.",
+"같은 두 상수로 계산할 수 있는 값이 하나 더 있습니다. 뮤 영을 엡실론 영으로 나누고 제곱근을 구하면 약 삼백칠십칠 옴이 나옵니다. 이것을 자유 공간 임피던스라고 합니다.",
+"멀리 퍼진 전파에서 전기장의 세기를 자기장의 세기로 나누면 언제나 이 값이 됩니다. 그래서 전계 강도만 재고도 전력 밀도를 계산할 수 있습니다. 전기장이 실효값이면 그 제곱을 삼백칠십칠로 나누고, 피크값이면 그 값을 다시 둘로 나눕니다.",
+"동축 케이블의 특성 임피던스 공식에도 같은 루트 뮤 나누기 엡실론이 들어 있습니다. 삼백칠십칠 옴을 이 파이로 나눈 약 육십 옴이 공식의 계수이고, 오십 옴이나 칠십오 옴이라는 값도 출발점은 이 두 상수입니다.",
+"참고로 지금의 국제단위계에서는 광속이 초속 이억 구천구백칠십구만 이천사백오십팔 미터로 정확히 정의되어 있고, 뮤 영과 엡실론 영은 측정으로 정하는 값입니다."
+],
+s8:[
+"맥스웰은 천팔백칠십구 년, 마흔여덟 살에 암으로 세상을 떠났습니다.",
+"그의 식이 예언한 보이지 않는 전자기파는 그때까지 아무도 확인하지 못했고, 많은 학자가 그의 이론을 받아들이지 않았습니다.",
+"그로부터 몇 년 뒤인 천팔백팔십육 년에서 팔십팔 년 사이, 독일 카를스루에의 하인리히 헤르츠가 그 파동을 직접 만들고 잡아냈습니다.",
+"송신기는 유도 코일로 수만 볼트의 전압을 만들어, 끝에 금속 구를 단 두 막대 사이의 좁은 틈에 불꽃을 튀기는 장치였습니다.",
+"불꽃이 튀어 틈이 도체가 되는 순간 막대 속 전류가 매우 빠르게 진동하고, 막대는 전파를 내보냅니다. 오늘날로 보면 다이폴 안테나이고, 주파수는 수십에서 수백 메가헤르츠 대역이었습니다.",
+"수신기는 작은 틈이 있는 철사 고리였습니다. 방 반대편에서 송신기에 불꽃이 튀면, 아무 전원도 연결되지 않은 이 고리의 틈에도 작은 불꽃이 튀었습니다.",
+"고리를 지나는 자기장의 변화가 셋째 식에 따라 틈에 전압을 만든 것입니다. 루프 안테나의 원형입니다.",
+"고리의 크기가 송신기와 맞을 때 불꽃이 가장 잘 튀었습니다. 같은 주파수에서 공진하도록 맞춘 것입니다.",
+"그림에서 고리 크기를 어긋나게 하고 불꽃을 튀기면 응답 불꽃이 나타나지 않습니다. 우리가 안테나 길이를 주파수에 맞춰 자르는 이유가 이것입니다.",
+"헤르츠는 금속 벽에 파동을 반사시켜 정재파를 만들고, 마디 사이의 거리로 파장을 쟀습니다. 회로 값에서 계산한 주파수와 곱하면 속도가 나오는데, 그 값이 빛의 속도와 같은 크기였습니다.",
+"반사와 굴절, 그리고 고리를 돌리면 불꽃이 약해지는 편파 현상까지 확인해서, 전파가 빛과 같은 성질의 파동이라는 것을 실험으로 보였습니다.",
+"이 발견이 어디에 쓰이느냐는 질문에 헤르츠는 아무 쓸모가 없다고 답했다고 전해집니다.",
+"그 쓸모없다던 파동이 오늘날의 모든 무선 통신, 방송, 그리고 아마추어 무선입니다. 주파수의 단위 헤르츠는 그의 이름에서 왔습니다."
+],
+s9:[
+"빛이 전자기파라는 것을 알면, 그 파동이 어떤 크기든 될 수 있다는 것도 알게 됩니다.",
+"눈에 보이는 빛은 파장이 대략 삼백팔십에서 칠백팔십 나노미터인 아주 좁은 범위입니다.",
+"파장을 늘이면 열로 느끼는 적외선, 그다음 마이크로파, 그리고 수 미터에서 수백 미터에 이르는 전파가 됩니다.",
+"파장을 줄이면 자외선, 엑스선, 감마선이 됩니다.",
+"이름은 모두 다르지만 같은 전자기 현상이고, 진공에서는 같은 속도로 나아갑니다.",
+"달라지는 것은 파장과 주파수, 그리고 그에 따른 광자 하나의 에너지와 물질과 상호작용하는 방식입니다. 전파는 안테나 도선 속 전자를 흔들고, 적외선은 분자를 진동시켜 열을 내고, 자외선보다 짧은 파장은 원자에서 전자를 떼어 낼 만큼 에너지가 큽니다.",
+"그림의 가로축은 로그 눈금이라 한 칸마다 열 배씩 차이가 납니다. 가시광선은 전체 중 아주 좁은 띠이고, 아마추어 무선의 단파 대역은 왼쪽 전파 영역에 있습니다.",
+"주파수를 알면 파장은 광속을 주파수로 나누어 구합니다. 메가헤르츠 단위로는 삼백을 주파수로 나누면 미터 단위의 파장이 됩니다.",
+"칠 메가헤르츠는 약 사십삼 미터, 백사십사 메가헤르츠는 약 이 미터입니다. 사십 미터 밴드, 이 미터 밴드라는 이름이 여기서 나왔습니다.",
+"그림 아래 계산기에 주파수를 넣으면 파장과 반파장, 사분의 일 파장, 그리고 근거리장 경계를 계산하고, 스펙트럼 위의 위치를 빨간 표시로 나타냅니다.",
+"실제 반파장 다이폴은 도선 굵기와 끝단 효과 때문에 계산값보다 몇 퍼센트 짧게 만들고, 동축 케이블 안에서는 파장이 단축률만큼 짧아집니다."
+],
+s10:[
+"맥스웰의 파동에는 당시 사람들이 받아들이기 어려운 점이 하나 있었습니다. 무엇이 진동하는가 하는 문제입니다.",
+"소리는 공기를, 물결은 물을 매질로 삼아 퍼집니다. 그래서 빛도 우주 공간을 가득 채운 보이지 않는 매질을 통해 퍼진다고 여겼고, 그 매질을 빛을 나르는 에테르라고 불렀습니다.",
+"맥스웰 자신도 에테르를 믿었고, 천팔백육십오 년 논문은 장을 매질의 운동으로 설명합니다. 그러나 완성된 식에는 매질의 성질이 들어갈 자리가 없습니다. 진공에서 진동하는 것은 전기장과 자기장 자신입니다.",
+"천팔백팔십칠 년 마이컬슨과 몰리는 에테르를 검출하려고 간섭계를 만들었습니다.",
+"빛을 반투명 거울로 둘로 나눠 서로 수직인 두 팔을 왕복시킨 뒤 다시 합칩니다. 지구가 에테르 속을 초속 약 삼십 킬로미터로 움직인다면 두 팔의 왕복 시간이 달라서, 장치를 돌릴 때 간섭무늬가 움직여야 했습니다.",
+"거울로 빛의 경로를 약 십일 미터까지 늘리고 장치 전체를 수은 위에 띄웠지만, 측정된 무늬 이동은 예상값의 이십분의 일보다 확실히 작았고, 아마 사십분의 일보다도 작았습니다. 이것을 영 결과라고 부릅니다.",
+"이 결과가 곧바로 에테르를 부정한 것은 아닙니다. 마이컬슨은 에테르 바람을 검출하려던 이 실험을 목적을 이루지 못한 실험으로 여겼지만, 에테르에 대한 믿음 자체는 버리지 않았습니다. 로런츠와 피츠제럴드는 움직이는 물체가 운동 방향으로 줄어든다는 가설로 결과를 설명하며 에테르를 유지했습니다.",
+"천구백오 년의 상대성 이론은 에테르 없이도 이 결과를 설명할 수 있었고, 이후 에테르는 물리학에서 쓰이지 않게 되었습니다. 다만 이 실험 하나가 에테르를 폐기시켰다거나 아인슈타인이 이 실험에서 곧바로 출발했다고 보기는 어렵고, 그 영향의 크기는 과학사에서 지금도 논의되는 주제입니다.",
+"맥스웰의 식에서 광속은 뮤 영과 엡실론 영, 곧 빈 공간의 성질로만 정해집니다.",
+"천구백오 년, 스물여섯 살의 알베르트 아인슈타인은 광속이 관찰자의 운동과 상관없이 누구에게나 같다는 것을 기본 원리로 받아들였습니다.",
+"이것은 맥스웰 식에서 곧바로 증명되는 사실이 아니라, 맥스웰 식이 어느 관찰자에게나 같은 모양으로 성립하도록 아인슈타인이 세운 출발점입니다.",
+"보통의 물체라면 마주 달려오는 사람에게 속도가 더해져 보여야 하지만 빛은 그렇지 않습니다. 그 대가로 시간과 길이가 관찰자에 따라 달라져야 했고, 여기서 특수 상대성 이론과 시간 지연, 그리고 이 는 엠 씨 제곱이 나왔습니다.",
+"덧붙여, 맥스웰이 천팔백육십오 년에 쓴 원래 형태는 스무 개의 변수와 스무 개의 식이었습니다.",
+"지금의 네 줄 벡터 형태로 정리한 사람은 천팔백팔십 년대의 올리버 헤비사이드이고, 헤르츠도 독립적으로 비슷한 정리를 했습니다. 헤비사이드는 전신선 이론과 임피던스라는 용어로도 무선 분야에 이름을 남겼습니다."
+],
+s11:[
+"정리하면 네 줄은 이렇게 읽을 수 있습니다.",
+"첫째, 전하에서 전기력선이 나온다.",
+"둘째, 자기력선은 시작도 끝도 없는 고리다.",
+"셋째, 변하는 자기장은 전기장을 감아 만든다.",
+"넷째, 전류와 변하는 전기장은 자기장을 감아 만든다.",
+"셋째와 넷째를 함께 풀면 전기장과 자기장이 결합된 파동이 빈 공간을 광속으로 퍼지는 해가 나오고, 그것이 빛이자 전파입니다.",
+"수학을 쓰지 못한 제본공 출신 패러데이가 장을 떠올렸고, 맥스웰이 그것을 식으로 옮기며 변위 전류라는 새 항으로 체계를 완성했고, 헤르츠가 그 파동을 처음으로 송신하고 수신했습니다.",
+"안테나를 세우고 전파를 내보낼 때마다, 이 네 줄이 동작하고 있습니다."
+]};
+var ORDER=["s0","s1","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11"];
+var EMB=(function(){try{return window.self!==window.top;}catch(e){return true;}})();if(EMB)document.body.classList.add("emb");
+var Q=[];ORDER.forEach(function(sec){SCRIPT[sec].forEach(function(t){Q.push({sec:sec,text:t});});});
+var synth=window.speechSynthesis,qi=0,token=0,playing=false,voice=null,curSec=null;
+function pickVoice(){if(!synth)return;var vs=synth.getVoices().filter(function(v){return v.lang&&v.lang.toLowerCase().replace("_","-").indexOf("ko")===0;});
+  var pref=[/natural/i,/online/i,/google/i,/yuna|유나/i,/sunhi|heami|injoon/i];
+  for(var i=0;i<pref.length;i++){for(var j=0;j<vs.length;j++){if(pref[i].test(vs[j].name)){voice=vs[j];return;}}}voice=vs[0]||null;}
+if(!synth){$("listenAll").disabled=true;$("ttsNote").textContent="이 브라우저는 음성 읽기를 지원하지 않습니다.";document.querySelectorAll("[data-listen]").forEach(function(b){b.style.display="none";});}
+else{pickVoice();if(synth.onvoiceschanged!==undefined)synth.onvoiceschanged=pickVoice;}
+function secIndex(sec){for(var i=0;i<Q.length;i++)if(Q[i].sec===sec)return i;return 0;}
+function mark(sec){if(sec===curSec)return;curSec=sec;document.querySelectorAll("section").forEach(function(s){s.classList.toggle("reading",s.id===sec);});var s=$(sec);if(s){if(EMB){try{window.parent.postMessage({type:"maxwell-scroll",y:s.getBoundingClientRect().top+window.scrollY},"*");}catch(e){}}else s.scrollIntoView({behavior:"smooth",block:"start"});$("pTitle").textContent=s.dataset.title||"";}}
+function updBar(){setTimeout(placeBar,0);$("pPlay").textContent=playing?"⏸":"▶";$("pPlay").setAttribute("aria-label",playing?"일시정지":"재생");var it=Q[qi];if(it){var n=SCRIPT[it.sec].length,k=qi-secIndex(it.sec)+1;$("pProg").textContent=k+" / "+n+" 문장";}}
+function step(my){if(my!==token)return;if(qi>=Q.length){stopAll();return;}var it=Q[qi];mark(it.sec);updBar();
+  var u=new SpeechSynthesisUtterance(it.text);u.lang="ko-KR";if(voice)u.voice=voice;u.rate=parseFloat($("pRate").value)||1;u.pitch=1;
+  u.onend=function(){if(my!==token)return;qi++;step(my);};
+  u.onerror=function(e){if(my!==token)return;if(e&&(e.error==="interrupted"||e.error==="canceled"))return;qi++;step(my);};
+  synth.speak(u);}
+function playFrom(i){if(!synth)return;token++;var my=token;synth.cancel();qi=clamp(i,0,Q.length-1);playing=true;$("player").classList.add("show");curSec=null;updBar();askVp();setTimeout(function(){step(my);},80);}
+function pause(){token++;synth.cancel();playing=false;updBar();}
+function stopAll(){token++;if(synth)synth.cancel();playing=false;$("player").classList.remove("show");document.querySelectorAll("section").forEach(function(s){s.classList.remove("reading");});curSec=null;}
+$("listenAll").addEventListener("click",function(){playFrom(0);});
+document.querySelectorAll("[data-listen]").forEach(function(b){b.addEventListener("click",function(){playFrom(secIndex(b.dataset.listen));});});
+$("pPlay").addEventListener("click",function(){if(playing)pause();else{var keep=curSec;playFrom(qi);}});
+$("pPrev").addEventListener("click",function(){var it=Q[qi];var si=ORDER.indexOf(it.sec);var start=secIndex(it.sec);playFrom(qi-start>1||si===0?start:secIndex(ORDER[si-1]));});
+$("pNext").addEventListener("click",function(){var si=ORDER.indexOf(Q[qi].sec);if(si<ORDER.length-1)playFrom(secIndex(ORDER[si+1]));});
+$("pStop").addEventListener("click",stopAll);
+$("pRate").addEventListener("change",function(){if(playing)playFrom(qi);});
+window.addEventListener("beforeunload",function(){if(synth)synth.cancel();});
+
+/* 임베드 시 높이 전달 */
+function postH(){if(!EMB)return;try{window.parent.postMessage({type:"resize",height:document.documentElement.scrollHeight},"*");}catch(e){}}
+window.addEventListener("load",postH);window.addEventListener("resize",postH);
+if(EMB&&window.ResizeObserver){new ResizeObserver(postH).observe(document.body);}
+/* 임베드: 부모 창의 보이는 영역 아래쪽에 재생 막대를 붙임 */
+var vp=null;
+function askVp(){if(EMB){try{window.parent.postMessage({type:"maxwell-need-vp"},"*");}catch(e){}}}
+function placeBar(){if(!EMB||!vp)return;var pl=$("player");var bh=pl.offsetHeight||60;var docH=document.documentElement.scrollHeight;var y=-vp.top+vp.h-bh;y=clamp(y,0,Math.max(0,docH-bh));pl.style.top=y+"px";}
+window.addEventListener("message",function(e){var d=e.data;if(!d||d.type!=="maxwell-viewport")return;vp=d;placeBar();});
+})();
+</script>
+</body>
+</html>
