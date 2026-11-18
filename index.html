@@ -12,7 +12,7 @@
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;word-break:keep-all;overflow-wrap:break-word;padding-bottom:96px}
+body{margin:0;position:relative;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;word-break:keep-all;overflow-wrap:break-word;padding-bottom:96px}
 main{max-width:780px;margin:0 auto;padding:28px 18px 40px}
 h1{font-size:28px;line-height:1.35;margin:0 0 6px}
 .lead{color:var(--sub);margin:0 0 14px}
@@ -621,6 +621,7 @@ body.emb #player{position:absolute;bottom:auto;top:0}
     </select>
     <button id="pStop" aria-label="듣기 끝내기">✕</button>
   </div>
+  <div id="pMsg" hidden style="max-width:780px;margin:6px auto 0;font-size:13px;color:#ffd98a"></div>
 </div>
 
 <script>
@@ -1190,7 +1191,8 @@ s11:[
 "안테나를 세우고 전파를 내보낼 때마다, 이 네 줄이 동작하고 있습니다."
 ]};
 var ORDER=["s0","s1","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11"];
-var EMB=(function(){try{return window.self!==window.top;}catch(e){return true;}})();if(EMB)document.body.classList.add("emb");
+function emb(){return !!window.__embedOn;}
+var errRun=0;
 var Q=[];ORDER.forEach(function(sec){SCRIPT[sec].forEach(function(t){Q.push({sec:sec,text:t});});});
 var synth=window.speechSynthesis,qi=0,token=0,playing=false,voice=null,curSec=null;
 function pickVoice(){if(!synth)return;var vs=synth.getVoices().filter(function(v){return v.lang&&v.lang.toLowerCase().replace("_","-").indexOf("ko")===0;});
@@ -1199,14 +1201,18 @@ function pickVoice(){if(!synth)return;var vs=synth.getVoices().filter(function(v
 if(!synth){$("listenAll").disabled=true;$("ttsNote").textContent="이 브라우저는 음성 읽기를 지원하지 않습니다.";document.querySelectorAll("[data-listen]").forEach(function(b){b.style.display="none";});}
 else{pickVoice();if(synth.onvoiceschanged!==undefined)synth.onvoiceschanged=pickVoice;}
 function secIndex(sec){for(var i=0;i<Q.length;i++)if(Q[i].sec===sec)return i;return 0;}
-function mark(sec){if(sec===curSec)return;curSec=sec;document.querySelectorAll("section").forEach(function(s){s.classList.toggle("reading",s.id===sec);});var s=$(sec);if(s){if(EMB){try{window.parent.postMessage({type:"maxwell-scroll",y:s.getBoundingClientRect().top+window.scrollY},"*");}catch(e){}}else s.scrollIntoView({behavior:"smooth",block:"start"});$("pTitle").textContent=s.dataset.title||"";}}
+function mark(sec){if(sec===curSec)return;curSec=sec;document.querySelectorAll("section").forEach(function(s){s.classList.toggle("reading",s.id===sec);});var s=$(sec);if(s){scrollToEl(s);$("pTitle").textContent=s.dataset.title||"";}}
 function updBar(){setTimeout(placeBar,0);$("pPlay").textContent=playing?"⏸":"▶";$("pPlay").setAttribute("aria-label",playing?"일시정지":"재생");var it=Q[qi];if(it){var n=SCRIPT[it.sec].length,k=qi-secIndex(it.sec)+1;$("pProg").textContent=k+" / "+n+" 문장";}}
 function step(my){if(my!==token)return;if(qi>=Q.length){stopAll();return;}var it=Q[qi];mark(it.sec);updBar();
   var u=new SpeechSynthesisUtterance(it.text);u.lang="ko-KR";if(voice)u.voice=voice;u.rate=parseFloat($("pRate").value)||1;u.pitch=1;
+  u.onstart=function(){errRun=0;};
   u.onend=function(){if(my!==token)return;qi++;step(my);};
-  u.onerror=function(e){if(my!==token)return;if(e&&(e.error==="interrupted"||e.error==="canceled"))return;qi++;step(my);};
+  u.onerror=function(e){if(my!==token)return;if(e&&(e.error==="interrupted"||e.error==="canceled"))return;
+    if(++errRun>=3){errRun=0;pause();showMsg("이 브라우저에서 음성을 재생하지 못했습니다. 기기의 음성(TTS) 설정을 확인하거나 크롬·엣지·사파리에서 열어 보십시오.");return;}
+    qi++;step(my);};
   synth.speak(u);}
-function playFrom(i){if(!synth)return;token++;var my=token;synth.cancel();qi=clamp(i,0,Q.length-1);playing=true;$("player").classList.add("show");curSec=null;updBar();askVp();setTimeout(function(){step(my);},80);}
+function playFrom(i){if(!synth)return;token++;var my=token;synth.cancel();qi=clamp(i,0,Q.length-1);playing=true;$("player").classList.add("show");showMsg("");curSec=null;updBar();if(emb()){try{window.parent.postMessage({type:"antenna-types:needview"},"*");}catch(e){}}
+  if(!voice&&synth.getVoices().length){showMsg("이 브라우저에는 한국어 음성이 없어 읽을 수 없습니다. 엣지, 크롬, 사파리에서 열어 보십시오.");playing=false;updBar();return;}setTimeout(function(){step(my);},80);}
 function pause(){token++;synth.cancel();playing=false;updBar();}
 function stopAll(){token++;if(synth)synth.cancel();playing=false;$("player").classList.remove("show");document.querySelectorAll("section").forEach(function(s){s.classList.remove("reading");});curSec=null;}
 $("listenAll").addEventListener("click",function(){playFrom(0);});
@@ -1219,14 +1225,52 @@ $("pRate").addEventListener("change",function(){if(playing)playFrom(qi);});
 window.addEventListener("beforeunload",function(){if(synth)synth.cancel();});
 
 /* 임베드 시 높이 전달 */
-function postH(){if(!EMB)return;try{window.parent.postMessage({type:"resize",height:document.documentElement.scrollHeight},"*");}catch(e){}}
-window.addEventListener("load",postH);window.addEventListener("resize",postH);
-if(EMB&&window.ResizeObserver){new ResizeObserver(postH).observe(document.body);}
-/* 임베드: 부모 창의 보이는 영역 아래쪽에 재생 막대를 붙임 */
-var vp=null;
-function askVp(){if(EMB){try{window.parent.postMessage({type:"maxwell-need-vp"},"*");}catch(e){}}}
-function placeBar(){if(!EMB||!vp)return;var pl=$("player");var bh=pl.offsetHeight||60;var docH=document.documentElement.scrollHeight;var y=-vp.top+vp.h-bh;y=clamp(y,0,Math.max(0,docH-bh));pl.style.top=y+"px";}
-window.addEventListener("message",function(e){var d=e.data;if(!d||d.type!=="maxwell-viewport")return;vp=d;placeBar();});
+function showMsg(t){var m=$("pMsg");m.textContent=t;m.hidden=!t;setTimeout(placeBar,0);}
+function scrollToEl(el){
+  if(emb()){var v=window.__embedView,H=v&&v.height?v.height:800,off=Math.max(56,H*0.1);
+    var y=el.getBoundingClientRect().top+window.scrollY-off+H/2;
+    try{window.parent.postMessage({type:"antenna-types:scrollto",y:y,smooth:true},"*");}catch(e){}}
+  else el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function placeBar(){
+  if(!emb())return;var pl=$("player");if(!pl.classList.contains("show"))return;
+  var v=window.__embedView;if(!v)return;
+  var bh=pl.offsetHeight||64,dh=document.documentElement.scrollHeight;
+  pl.style.top=Math.max(0,Math.min(dh-bh,v.top+v.height-bh))+"px";
+}
+/* ---------- 블로그(iframe) 삽입: 높이·보이는 범위 주고받기 (antenna-types 규약) ---------- */
+(function(){
+  if(window.self===window.top)return;
+  var last=0,on=false;
+  function send(force){
+    if(!on)return;
+    var h=Math.ceil(document.body.getBoundingClientRect().height);
+    if(!force&&Math.abs(h-last)<2)return;
+    last=h;
+    try{window.parent.postMessage({type:"antenna-types:height",height:h},"*");}catch(e){}
+  }
+  window.addEventListener("message",function(e){
+    var d=e.data;if(!d||typeof d!=="object")return;
+    if(d.type==="antenna-types:ping"){
+      var first=!on;
+      if(!on){on=true;window.__embedOn=true;document.body.classList.add("emb");}
+      send(true);
+      if(first)setTimeout(jumpHash,200);
+    }else if(d.type==="antenna-types:viewport"){
+      window.__embedView={top:+d.top||0,height:+d.height||0};
+      placeBar();
+    }
+  });
+  if("ResizeObserver" in window)new ResizeObserver(function(){send(false);}).observe(document.body);
+  window.addEventListener("load",function(){send(true);});
+  function jumpHash(){var t=location.hash&&document.getElementById(location.hash.slice(1));if(t)scrollToEl(t);}
+  document.addEventListener("click",function(e){
+    if(!window.__embedOn)return;
+    var a=e.target.closest&&e.target.closest('a[href^="#"]');if(!a)return;
+    var t=document.getElementById(a.getAttribute("href").slice(1));if(!t)return;
+    e.preventDefault();scrollToEl(t);
+  });
+})();
 })();
 </script>
 </body>

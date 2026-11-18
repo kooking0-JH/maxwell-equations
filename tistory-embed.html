@@ -1,0 +1,47 @@
+<!-- 맥스웰 방정식, 네 줄로 읽는 전파 — 티스토리 글에 넣는 코드
+     글쓰기 → 오른쪽 위 [기본모드] → [HTML]로 바꾼 뒤, 아래 전체를 붙여 넣습니다.
+     높이 자동 맞춤, 목차 링크 이동, 듣기 때 블로그 화면 따라가기·재생 막대 위치를 맞춥니다.
+     (index.html의 antenna-types 규약: ping / height / viewport / needview / scrollto) -->
+<div style="margin:0 auto;max-width:900px">
+<iframe id="maxwell-frame" src="https://kooking0-jh.github.io/maxwell-equations/" title="맥스웰 방정식, 네 줄로 읽는 전파" style="display:block;width:100%;height:3000px;border:0;overflow:hidden" scrolling="no" loading="eager" allow="autoplay"></iframe>
+<p style="font-size:13px;color:#6b7385;text-align:center;margin:8px 0 0">
+  화면이 잘 보이지 않으면 <a href="https://kooking0-jh.github.io/maxwell-equations/" target="_blank" rel="noopener">새 창에서 열기</a>
+</p>
+</div>
+<script>
+(function(){
+  var f = document.getElementById('maxwell-frame');
+  if (!f) return;
+  var ORIGIN = new URL(f.src, location.href).origin;
+  function post(msg){ try { f.contentWindow.postMessage(msg, ORIGIN); } catch(e){} }
+  function frameTop(){ return f.getBoundingClientRect().top + window.pageYOffset; }
+  /* 블로그 화면에서 지금 보이는 범위를 iframe 안 좌표로 알려 줌 (듣기 재생 막대 위치, 화면 따라가기) */
+  function sendView(){ post({type: 'antenna-types:viewport', top: window.pageYOffset - frameTop(), height: window.innerHeight}); }
+
+  window.addEventListener('message', function(e){
+    if (e.origin !== ORIGIN || e.source !== f.contentWindow) return;
+    var d = e.data;
+    if (!d || typeof d !== 'object') return;
+    if (d.type === 'antenna-types:height'){
+      var h = +d.height;
+      if (h > 100){ f.style.height = h + 'px'; sendView(); }
+    } else if (d.type === 'antenna-types:scrollto'){
+      /* index.html은 "화면 가운데에 둘 위치"를 보내므로 화면 높이의 절반을 뺌 */
+      var y = Math.max(0, frameTop() + (+d.y || 0) - window.innerHeight / 2);
+      try { window.scrollTo({top: y, behavior: d.smooth ? 'smooth' : 'auto'}); } catch(err){ window.scrollTo(0, y); }
+    } else if (d.type === 'antenna-types:needview'){
+      sendView();
+    }
+  });
+
+  var tick = 0;
+  function onMove(){ if (tick) return; tick = requestAnimationFrame(function(){ tick = 0; sendView(); }); }
+  window.addEventListener('scroll', onMove, {passive: true});
+  window.addEventListener('resize', onMove);
+
+  /* 페이지가 늦게 열려도 연결되도록 몇 번 인사(ping)를 보냄 */
+  function ping(){ post({type: 'antenna-types:ping'}); sendView(); }
+  f.addEventListener('load', ping);
+  var n = 0, iv = setInterval(function(){ ping(); if (++n >= 12) clearInterval(iv); }, 500);
+})();
+</script>
